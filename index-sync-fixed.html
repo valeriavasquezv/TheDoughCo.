@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Costos Pastelería</title>
+<meta name="theme-color" content="#8b5e4b">
+<style>
+:root{--bg:#f7f5f2;--card:#fff;--text:#292724;--muted:#77716b;--line:#e8e2dc;--accent:#8b5e4b;--good:#347a57;--warn:#b67a1c;--bad:#b54b4b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff}button.secondary{background:#eee8e2;color:var(--text)}button.danger{background:#f5dddd;color:#8c3030}
+.app{display:flex;min-height:100vh}.side{width:220px;background:#fff;border-right:1px solid var(--line);padding:20px;position:sticky;top:0;height:100vh}.brand{font-weight:800;font-size:20px;margin-bottom:25px}.nav button{width:100%;text-align:left;background:transparent;color:var(--text);margin:3px 0}.nav button.active,.nav button:hover{background:#f1e8e2}.main{flex:1;padding:28px;max-width:1250px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.title{font-size:28px;font-weight:750}.sub{color:var(--muted);margin-top:3px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}.metric{font-size:27px;font-weight:750;margin-top:8px}.label{color:var(--muted);font-size:14px}.section{margin-top:22px}.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.section h2{font-size:19px;margin:0}.tablewrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px}.table{width:100%;border-collapse:collapse;min-width:650px}.table th,.table td{padding:12px;border-bottom:1px solid var(--line);text-align:left}.table th{font-size:13px;color:var(--muted);font-weight:600}.actions{display:flex;gap:7px}.pill{display:inline-block;padding:4px 8px;border-radius:99px;font-size:12px}.good{background:#e0f0e7;color:var(--good)}.warn{background:#fff0d4;color:var(--warn)}.bad{background:#f7dfdf;color:var(--bad)}.form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;padding:10px;border:1px solid #ddd5ce;border-radius:10px;background:#fff}.full{grid-column:1/-1}.modal{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.modalbox{background:#fff;border-radius:18px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:22px}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.hidden{display:none!important}.recipe-line{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}.notice{padding:13px;border-radius:12px;background:#f2ece7;margin:12px 0}.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.authbox{background:#fff;border:1px solid var(--line);border-radius:20px;padding:25px;width:min(420px,100%)}.authbox h1{margin-top:0}.error{color:#a33;background:#f8e4e4;padding:10px;border-radius:10px;margin:10px 0}.mobilebar{display:none}
+@media(max-width:800px){.side{display:none}.main{padding:18px 14px 85px}.grid{grid-template-columns:repeat(2,1fr)}.form{grid-template-columns:1fr}.mobilebar{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:8;padding:7px;gap:4px}.mobilebar button{flex:1;background:transparent;color:var(--text);padding:8px 4px;font-size:12px}.mobilebar button.active{background:#f1e8e2}.top .secondary{display:none}.recipe-line{grid-template-columns:1fr 1fr}.recipe-line select{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="modal hidden" id="modal"><div class="modalbox" id="modalbox"></div></div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://swoendvkjyrgmyaytrnr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Q1vDioyCIY75_94N_6idRw_IjLS98fG";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let db={settings:{iva:19,target:40,currency:'CLP'},ingredients:[],recipes:[],products:[],fixed:[],history:[]};
+let page='dashboard', loading=false;
+
+const root=document.getElementById('root');
+const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CL');
+const fmt=n=>Number(n||0).toLocaleString('es-CL',{maximumFractionDigits:1});
+const ingredientCost=i=>i&&i.purchase_qty>0?Number(i.net_price)/Number(i.purchase_qty):0;
+const recipeCost=r=>(r?.lines||[]).reduce((s,l)=>s+ingredientCost(db.ingredients.find(i=>i.id===l.ingredient_id))*Number(l.quantity||0),0);
+const productCost=p=>{const r=db.recipes.find(x=>x.id===p.recipe_id);return (r?recipeCost(r)/Math.max(1,Number(r.yield_units)):0)+Number(p.packaging||0)+Number(p.labor||0)};
+const margin=p=>p.sale_price_net?((Number(p.sale_price_net)-productCost(p))/Number(p.sale_price_net)*100):0;
+const monthlyFixed=()=>db.fixed.reduce((s,x)=>s+Number(x.amount||0),0);
+
+async function loadData(){
+  const u=(await supabase.auth.getUser()).data.user;
+  if(!u)return;
+  const [ing,rec,lines,prod,fixed,settings,hist]=await Promise.all([
+    supabase.from('ingredients').select('*').order('name'),
+    supabase.from('recipes').select('*').order('name'),
+    supabase.from('recipe_lines').select('*'),
+    supabase.from('products').select('*').order('name'),
+    supabase.from('fixed_costs').select('*').order('name'),
+    supabase.from('settings').select('*').maybeSingle(),
+    supabase.from('ingredient_price_history').select('*').order('changed_at',{ascending:false})
+  ]);
+  for(const r of [ing,rec,lines,prod,fixed,settings,hist])if(r.error)throw r.error;
+  db.ingredients=ing.data||[];db.recipes=(rec.data||[]).map(r=>({...r,lines:(lines.data||[]).filter(l=>l.recipe_id===r.id)}));
+  db.products=prod.data||[];db.fixed=fixed.data||[];db.settings={iva:settings.data?.iva??19,target_margin:settings.data?.target_margin??40,currency:settings.data?.currency??'CLP'};
+  db.history=hist.data||[];
+}
+
+async function init(){
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session){authScreen();return}
+  try{await loadData();render();}catch(e){root.innerHTML=`<div class="auth"><div class="authbox"><h1>⚠️ No pude cargar tus datos</h1><p>${e.message}</p><button onclick="location.reload()">Reintentar</button></div></div>`}
+}
+supabase.auth.onAuthStateChange((_event,session)=>{if(!session)authScreen();else init()});
+
+function authScreen(){
+ root.innerHTML=`<div class="auth"><div class="authbox">
+ <h1>🍰 Costos Pastelería</h1><p class="sub">Tus datos se sincronizan entre celular, tablet y computador.</p>
+ <div id="autherr"></div>
+ <div class="field"><label>Correo</label><input id="email" type="email" placeholder="tu correo"></div>
+ <div class="field" style="margin-top:10px"><label>Contraseña</label><input id="pass" type="password" placeholder="mínimo 6 caracteres"></div>
+ <div style="display:flex;gap:8px;margin-top:15px"><button onclick="login()">Entrar</button><button class="secondary" onclick="signup()">Crear cuenta</button></div>
+ </div></div>`;
+}
+async function login(){const r=await supabase.auth.signInWithPassword({email:email.value.trim(),password:pass.value});if(r.error)authError(r.error.message)}
+async function signup(){const r=await supabase.auth.signUp({email:email.value.trim(),password:pass.value});if(r.error)authError(r.error.message);else alert('Cuenta creada. Si Supabase pide confirmar tu correo, revisa tu email y luego vuelve a entrar.')}
+function authError(x){document.getElementById('autherr').innerHTML=`<div class="error">${x}</div>`}
+
+function nav(){const items=[['dashboard','🏠 Inicio'],['ingredients','🥣 Ingredientes'],['recipes','📖 Recetas'],['products','🍪 Productos'],['costs','💸 Costos'],['breakeven','🎯 Equilibrio'],['settings','⚙️ Configuración']];return items.map(x=>`<button class="${page===x[0]?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('')}
+function render(){root.innerHTML=`<div class="app"><aside class="side"><div class="brand">🍰 Costos Pastelería</div><div class="nav">${nav()}</div><button class="secondary" style="margin-top:20px;width:100%" onclick="logout()">Cerrar sesión</button></aside><main class="main"><div id="view"></div></main></div><div class="mobilebar">${nav()}</div>`;draw()}
+function go(p){page=p;draw()}
+function draw(){const v=document.getElementById('view');if(!v)return;if(page==='dashboard')v.innerHTML=dashboard();if(page==='ingredients')v.innerHTML=ingredients();if(page==='recipes')v.innerHTML=recipes();if(page==='products')v.innerHTML=products();if(page==='costs')v.innerHTML=costs();if(page==='breakeven')v.innerHTML=breakeven();if(page==='settings')v.innerHTML=settings()}
+async function logout(){await supabase.auth.signOut()}
+
+function dashboard(){let ps=db.products.filter(p=>p.active),avgc=ps.length?ps.reduce((s,p)=>s+productCost(p),0)/ps.length:0,avgp=ps.length?ps.reduce((s,p)=>s+Number(p.sale_price_net),0)/ps.length:0,avgm=ps.length?ps.reduce((s,p)=>s+margin(p),0)/ps.length:0;return `<div class="top"><div><div class="title">Resumen</div><div class="sub">Tus costos, sincronizados.</div></div><button onclick="openProduct()">+ Crear producto</button></div><div class="grid"><div class="card"><div class="label">Productos</div><div class="metric">${db.products.length}</div></div><div class="card"><div class="label">Costo promedio</div><div class="metric">${money(avgc)}</div></div><div class="card"><div class="label">Precio promedio</div><div class="metric">${money(avgp)}</div></div><div class="card"><div class="label">Margen promedio</div><div class="metric">${fmt(avgm)}%</div></div><div class="card"><div class="label">Costos fijos mensuales</div><div class="metric">${money(monthlyFixed())}</div></div><div class="card"><div class="label">IVA</div><div class="metric">${db.settings.iva}%</div></div></div><div class="section"><div class="sectionhead"><h2>Productos</h2><button class="secondary" onclick="go('products')">Ver todos</button></div><div class="tablewrap"><table class="table"><tr><th>Producto</th><th>Costo</th><th>Venta neta</th><th>Margen</th></tr>${ps.slice(0,8).map(p=>`<tr><td>${p.name}</td><td>${money(productCost(p))}</td><td>${money(p.sale_price_net)}</td><td><span class="pill ${margin(p)>=db.settings.target_margin?'good':margin(p)>=0?'warn':'bad'}">${fmt(margin(p))}%</span></td></tr>`).join('')||'<tr><td colspan="4" class="label">Aún no hay productos.</td></tr>'}</table></div></div>`}
+
+function ingredients(){return `<div class="top"><div><div class="title">Ingredientes</div><div class="sub">Un cambio aquí se refleja automáticamente en tus recetas.</div></div><button onclick="openIngredient()">+ Agregar</button></div><div class="notice">IVA actual: <b>${db.settings.iva}%</b>. El precio ingresado es neto.</div><div class="tablewrap"><table class="table"><tr><th>Ingrediente</th><th>Categoría</th><th>Formato</th><th>Precio neto</th><th>Costo unitario</th><th></th></tr>${db.ingredients.map(i=>`<tr><td>${i.name}</td><td>${i.category||''}</td><td>${i.purchase_qty} ${i.unit}</td><td>${money(i.net_price)}</td><td>${money(ingredientCost(i))}</td><td class="actions"><button class="secondary" onclick="openIngredient('${i.id}')">Editar</button><button class="danger" onclick="removeRow('ingredients','${i.id}')">Eliminar</button></td></tr>`).join('')}</table></div>`}
+function recipes(){return `<div class="top"><div><div class="title">Recetas</div><div class="sub">Costos actualizados automáticamente.</div></div><button onclick="openRecipe()">+ Nueva receta</button></div><div class="grid">${db.recipes.map(r=>`<div class="card"><b>${r.name}</b><div class="sub">${r.category||''} · ${r.yield_units} unidades</div><div class="metric">${money(recipeCost(r))}</div><div class="label">${money(recipeCost(r)/Math.max(1,r.yield_units))} por unidad</div><div class="actions" style="margin-top:14px"><button class="secondary" onclick="openRecipe('${r.id}')">Editar</button><button class="danger" onclick="removeRecipe('${r.id}')">Eliminar</button></div></div>`).join('')||'<div class="card">No hay recetas.</div>'}</div>`}
+function products(){return `<div class="top"><div><div class="title">Productos</div><div class="sub">Costo real y rentabilidad.</div></div><button onclick="openProduct()">+ Nuevo producto</button></div><div class="tablewrap"><table class="table"><tr><th>Producto</th><th>Costo</th><th>Venta neta</th><th>Ganancia</th><th>Margen</th><th></th></tr>${db.products.map(p=>{let c=productCost(p),g=Number(p.sale_price_net)-c,m=margin(p);return `<tr><td><b>${p.name}</b><br><span class="label">${db.recipes.find(r=>r.id===p.recipe_id)?.name||'Sin receta'}</span></td><td>${money(c)}</td><td>${money(p.sale_price_net)}</td><td>${money(g)}</td><td><span class="pill ${m>=db.settings.target_margin?'good':m>=0?'warn':'bad'}">${fmt(m)}%</span></td><td class="actions"><button class="secondary" onclick="openProduct('${p.id}')">Editar</button><button class="danger" onclick="removeRow('products','${p.id}')">Eliminar</button></td></tr>`}).join('')}</table></div>`}
+function costs(){return `<div class="top"><div><div class="title">Otros costos</div><div class="sub">Gastos fijos mensuales y costos por producto.</div></div><button onclick="openFixed()">+ Costo fijo</button></div><div class="card"><div class="label">Costos fijos mensuales</div><div class="metric">${money(monthlyFixed())}</div></div><div class="section tablewrap"><table class="table"><tr><th>Nombre</th><th>Periodicidad</th><th>Monto</th><th></th></tr>${db.fixed.map(x=>`<tr><td>${x.name}</td><td>${x.period}</td><td>${money(x.amount)}</td><td class="actions"><button class="secondary" onclick="openFixed('${x.id}')">Editar</button><button class="danger" onclick="removeRow('fixed_costs','${x.id}')">Eliminar</button></td></tr>`).join('')}</table></div><div class="notice">Packaging y mano de obra se ingresan por producto para mantener el uso diario simple.</div>`}
+function breakeven(){let p=db.products.find(x=>x.active),price=p?Number(p.sale_price_net):0,c=p?productCost(p):0,con=price-c,u=con>0?monthlyFixed()/con:0;return `<div class="top"><div><div class="title">Punto de equilibrio</div><div class="sub">Una estimación simple para cubrir tus costos fijos.</div></div></div><div class="card"><div class="field"><label>Producto</label><select onchange="beSelect(this.value)">${db.products.filter(x=>x.active).map(x=>`<option value="${x.id}" ${x.id===p?.id?'selected':''}>${x.name}</option>`).join('')}</select></div><div class="grid" style="margin-top:20px"><div><div class="label">Costos fijos</div><div class="metric">${money(monthlyFixed())}</div></div><div><div class="label">Margen contribución</div><div class="metric">${money(con)}</div></div><div><div class="label">Punto de equilibrio</div><div class="metric">${isFinite(u)?Math.ceil(u):'—'} un.</div></div><div><div class="label">Ventas necesarias</div><div class="metric">${isFinite(u)?money(Math.ceil(u)*price):'—'}</div></div></div><div class="notice">Necesitas vender aproximadamente <b>${isFinite(u)?Math.ceil(u):'—'} unidades al mes</b> para cubrir tus costos fijos.</div></div>`}
+function beSelect(id){const p=db.products.find(x=>x.id===id);if(!p)return;const price=Number(p.sale_price_net),c=productCost(p),con=price-c,u=con>0?monthlyFixed()/con:0;document.querySelector('.metric').innerHTML=money(monthlyFixed());go('breakeven')}
+
+function settings(){return `<div class="top"><div><div class="title">Configuración</div><div class="sub">Parámetros generales.</div></div></div><div class="card"><div class="form"><div class="field"><label>IVA (%)</label><input id="iva" type="number" value="${db.settings.iva}"></div><div class="field"><label>Margen objetivo (%)</label><input id="target" type="number" value="${db.settings.target_margin}"></div></div><button style="margin-top:15px" onclick="saveSettings()">Guardar</button></div><div class="notice">Estos cálculos son para gestión interna y no reemplazan una declaración tributaria.</div>`}
+
+function openModal(s){document.getElementById('modalbox').innerHTML=s;document.getElementById('modal').classList.remove('hidden')}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal()}
+
+function openIngredient(id){const x=db.ingredients.find(i=>i.id===id)||{name:'',category:'',supplier:'',purchase_qty:1000,unit:'g',net_price:0,purchase_date:new Date().toISOString().slice(0,10)};openModal(`<div class="modalhead"><h2>${id?'Editar':'Agregar'} ingrediente</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="n" value="${x.name}"></div><div class="field"><label>Categoría</label><input id="c" value="${x.category||''}"></div><div class="field"><label>Proveedor</label><input id="s" value="${x.supplier||''}"></div><div class="field"><label>Cantidad comprada</label><input id="q" type="number" value="${x.purchase_qty}"></div><div class="field"><label>Unidad</label><select id="u"><option ${x.unit==='g'?'selected':''}>g</option><option ${x.unit==='kg'?'selected':''}>kg</option><option ${x.unit==='ml'?'selected':''}>ml</option><option ${x.unit==='un'?'selected':''}>un</option></select></div><div class="field"><label>Precio neto</label><input id="p" type="number" value="${x.net_price}"></div><div class="field"><label>Fecha</label><input id="d" type="date" value="${x.purchase_date||''}"></div></div><button style="margin-top:15px" onclick="saveIngredient('${id||''}')">Guardar</button>`)}
+async function saveIngredient(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:n.value.trim(),category:c.value.trim(),supplier:s.value.trim(),purchase_qty:+q.value,unit:u.value,net_price:+p.value,purchase_date:d.value};if(!payload.name||payload.purchase_qty<=0)return alert('Completa nombre y cantidad.');if(id){const old=db.ingredients.find(i=>i.id===id);if(old&&Number(old.net_price)!==payload.net_price)await supabase.from('ingredient_price_history').insert({user_id:user.id,ingredient_id:id,old_price:old.net_price,new_price:payload.net_price,supplier:payload.supplier});await supabase.from('ingredients').update(payload).eq('id',id)}else await supabase.from('ingredients').insert(payload);await refresh();closeModal()}
+function openRecipe(id){const r=db.recipes.find(x=>x.id===id)||{name:'',category:'',yield_units:1,lines:[]};window.lines=(r.lines||[]).map(x=>({...x}));openModal(`<div class="modalhead"><h2>${id?'Editar':'Nueva'} receta</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="rn" value="${r.name}"></div><div class="field"><label>Categoría</label><input id="rc" value="${r.category||''}"></div><div class="field"><label>Rendimiento</label><input id="ry" type="number" value="${r.yield_units}"></div></div><div class="section"><h2>Ingredientes</h2><div id="lines"></div><button class="secondary" onclick="addLine()">+ Ingrediente</button></div><button style="margin-top:15px" onclick="saveRecipe('${id||''}')">Guardar receta</button>`);drawLines()}
+function addLine(){lines.push({ingredient_id:db.ingredients[0]?.id||'',quantity:0});drawLines()}
+function drawLines(){document.getElementById('lines').innerHTML=lines.map((l,i)=>`<div class="recipe-line"><div class="field"><label>Ingrediente</label><select onchange="lines[${i}].ingredient_id=this.value">${db.ingredients.map(x=>`<option value="${x.id}" ${x.id===l.ingredient_id?'selected':''}>${x.name}</option>`).join('')}</select></div><div class="field"><label>Cantidad</label><input type="number" value="${l.quantity}" onchange="lines[${i}].quantity=+this.value"></div><div>${money(ingredientCost(db.ingredients.find(x=>x.id===l.ingredient_id))*l.quantity)}</div><button class="danger" onclick="lines.splice(${i},1);drawLines()">×</button></div>`).join('')}
+async function saveRecipe(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:rn.value.trim(),category:rc.value.trim(),yield_units:+ry.value};if(!payload.name||payload.yield_units<=0)return alert('Completa nombre y rendimiento.');let rid=id;if(id)await supabase.from('recipes').update(payload).eq('id',id);else{const r=await supabase.from('recipes').insert(payload).select().single();if(r.error)return alert(r.error.message);rid=r.data.id}await supabase.from('recipe_lines').delete().eq('recipe_id',rid);if(lines.length)await supabase.from('recipe_lines').insert(lines.map(l=>({user_id:user.id,recipe_id:rid,ingredient_id:l.ingredient_id,quantity:l.quantity})));await refresh();closeModal()}
+function openProduct(id){const p=db.products.find(x=>x.id===id)||{name:'',recipe_id:db.recipes[0]?.id||'',packaging:0,labor:0,sale_price_net:0,active:true};openModal(`<div class="modalhead"><h2>${id?'Editar':'Nuevo'} producto</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="pn" value="${p.name}"></div><div class="field"><label>Receta</label><select id="pr">${db.recipes.map(r=>`<option value="${r.id}" ${r.id===p.recipe_id?'selected':''}>${r.name}</option>`).join('')}</select></div><div class="field"><label>Packaging por unidad</label><input id="pp" type="number" value="${p.packaging}"></div><div class="field"><label>Mano de obra por unidad</label><input id="pl" type="number" value="${p.labor}"></div><div class="field"><label>Precio de venta neto</label><input id="px" type="number" value="${p.sale_price_net}"></div><div class="field"><label>Estado</label><select id="pa"><option value="true" ${p.active?'selected':''}>Activo</option><option value="false" ${!p.active?'selected':''}>Inactivo</option></select></div></div><div class="notice">Costo actual: <b>${money(productCost(p))}</b> · Margen: <b>${fmt(margin(p))}%</b></div><button onclick="saveProduct('${id||''}')">Guardar producto</button>`)}
+async function saveProduct(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:pn.value.trim(),recipe_id:pr.value||null,packaging:+pp.value,labor:+pl.value,sale_price_net:+px.value,active:pa.value==='true'};if(!payload.name)return alert('Completa el nombre.');if(id)await supabase.from('products').update(payload).eq('id',id);else await supabase.from('products').insert(payload);await refresh();closeModal()}
+function openFixed(id){const x=db.fixed.find(i=>i.id===id)||{name:'',amount:0,period:'Mensual'};openModal(`<div class="modalhead"><h2>${id?'Editar':'Agregar'} costo fijo</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="fn" value="${x.name}"></div><div class="field"><label>Monto mensual</label><input id="fa" type="number" value="${x.amount}"></div></div><button style="margin-top:15px" onclick="saveFixed('${id||''}')">Guardar</button>`)}
+async function saveFixed(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:fn.value.trim(),amount:+fa.value,period:'Mensual'};if(id)await supabase.from('fixed_costs').update(payload).eq('id',id);else await supabase.from('fixed_costs').insert(payload);await refresh();closeModal()}
+async function removeRow(table,id){if(!confirm('¿Eliminar este registro?'))return;await supabase.from(table).delete().eq('id',id);await refresh()}
+async function removeRecipe(id){if(!confirm('¿Eliminar esta receta?'))return;await supabase.from('recipe_lines').delete().eq('recipe_id',id);await supabase.from('recipes').delete().eq('id',id);await refresh()}
+async function saveSettings(){const user=(await supabase.auth.getUser()).data.user;await supabase.from('settings').upsert({user_id:user.id,iva:+iva.value,target_margin:+target.value,currency:'CLP'});await refresh()}
+async function refresh(){await loadData();render()}
+window.login = login;
+window.signup = signup;
+window.logout = logout;
+window.go = go;
+window.openIngredient = openIngredient;
+window.saveIngredient = saveIngredient;
+window.openRecipe = openRecipe;
+window.addLine = addLine;
+window.drawLines = drawLines;
+window.saveRecipe = saveRecipe;
+window.openProduct = openProduct;
+window.saveProduct = saveProduct;
+window.openFixed = openFixed;
+window.saveFixed = saveFixed;
+window.removeRow = removeRow;
+window.removeRecipe = removeRecipe;
+window.saveSettings = saveSettings;
+window.closeModal = closeModal;
+window.beSelect = beSelect;
+init();
+</script>
+</body></html>
