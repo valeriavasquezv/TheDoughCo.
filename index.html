@@ -1,1183 +1,151 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diagnóstico Empresarial — Ossuu</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Costos Pastelería</title>
+<meta name="theme-color" content="#8b5e4b">
 <style>
-  :root {
-    --navy: #0D1B2A;
-    --orbit: #1A6EBF;
-    --orbit-light: #2A8FE8;
-    --orbit-glow: rgba(26,110,191,0.18);
-    --white: #F4F7FB;
-    --muted: #8A9BB0;
-    --accent: #00D4C8;
-    --accent-dim: rgba(0,212,200,0.12);
-    --surface: rgba(255,255,255,0.04);
-    --border: rgba(255,255,255,0.08);
-    --text: #E8EDF4;
-    --radius: 14px;
-    --transition: 0.3s cubic-bezier(.4,0,.2,1);
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
-  body {
-    background: var(--navy);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Background grid + glow */
-  body::before {
-    content:'';
-    position:fixed; inset:0; z-index:0;
-    background:
-      radial-gradient(ellipse 70% 50% at 80% 10%, rgba(26,110,191,0.22) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 40% at 10% 80%, rgba(0,212,200,0.1) 0%, transparent 60%),
-      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.025) 40px),
-      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.025) 40px);
-    pointer-events:none;
-  }
-
-  .wrap {
-    position:relative; z-index:1;
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 48px 24px 80px;
-  }
-
-  /* Header */
-  .header {
-    text-align:center;
-    margin-bottom: 56px;
-    animation: fadeUp .7s ease both;
-  }
-
-  .logo {
-    display:inline-flex;
-    align-items:center;
-    gap: 10px;
-    margin-bottom: 32px;
-  }
-
-  .logo-icon {
-    width:38px; height:38px;
-    background: linear-gradient(135deg, var(--orbit), var(--accent));
-    border-radius: 50%;
-    position:relative;
-    box-shadow: 0 0 20px rgba(0,212,200,0.35);
-  }
-  .logo-icon::after {
-    content:'';
-    position:absolute;
-    inset: 6px;
-    border: 2px solid rgba(255,255,255,0.5);
-    border-radius:50%;
-  }
-
-  .logo-text {
-    font-family:'Syne', sans-serif;
-    font-weight:800;
-    font-size:22px;
-    letter-spacing:.04em;
-    color:#fff;
-  }
-
-  .badge {
-    display:inline-block;
-    background: var(--accent-dim);
-    border: 1px solid rgba(0,212,200,0.3);
-    color: var(--accent);
-    font-size:11px;
-    font-weight:500;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    padding: 4px 12px;
-    border-radius:40px;
-    margin-bottom:20px;
-  }
-
-  .header h1 {
-    font-family:'Syne', sans-serif;
-    font-size: clamp(28px,5vw,42px);
-    font-weight:800;
-    line-height:1.15;
-    color:#fff;
-    margin-bottom:14px;
-  }
-
-  .header h1 span {
-    background: linear-gradient(90deg, var(--orbit-light), var(--accent));
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
-  }
-
-  .header p {
-    color: var(--muted);
-    font-size:15px;
-    max-width:520px;
-    margin:0 auto;
-    font-weight:300;
-  }
-
-  /* Progress bar */
-  .progress-wrap {
-    margin-bottom: 40px;
-    animation: fadeUp .7s .1s ease both;
-  }
-
-  .progress-labels {
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:8px;
-    font-size:11px;
-    color: var(--muted);
-    letter-spacing:.06em;
-    text-transform:uppercase;
-  }
-
-  .progress-track {
-    height:3px;
-    background: rgba(255,255,255,0.07);
-    border-radius:99px;
-    overflow:hidden;
-  }
-
-  .progress-fill {
-    height:100%;
-    background: linear-gradient(90deg, var(--orbit), var(--accent));
-    border-radius:99px;
-    transition: width .6s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 0 8px rgba(0,212,200,0.5);
-  }
-
-  .step-dots {
-    display:flex;
-    gap:6px;
-    justify-content:center;
-    margin-top:14px;
-  }
-
-  .step-dot {
-    width:7px; height:7px;
-    border-radius:50%;
-    background: rgba(255,255,255,0.12);
-    transition: var(--transition);
-  }
-  .step-dot.active { background: var(--accent); box-shadow:0 0 6px var(--accent); }
-  .step-dot.done { background: var(--orbit); }
-
-  /* Card */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 40px;
-    backdrop-filter: blur(12px);
-    margin-bottom:20px;
-    animation: fadeUp .5s ease both;
-  }
-
-  .section-label {
-    font-size:11px;
-    font-weight:500;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color: var(--orbit-light);
-    margin-bottom:6px;
-  }
-
-  .card h2 {
-    font-family:'Syne', sans-serif;
-    font-size:20px;
-    font-weight:700;
-    color:#fff;
-    margin-bottom:28px;
-  }
-
-  /* Form elements */
-  .field {
-    margin-bottom:22px;
-  }
-
-  .field label {
-    display:block;
-    font-size:13px;
-    font-weight:500;
-    color: var(--muted);
-    margin-bottom:8px;
-    letter-spacing:.02em;
-  }
-
-  .field label span.req {
-    color: var(--accent);
-    margin-left:3px;
-  }
-
-  .input, .select, .textarea {
-    width:100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family:'DM Sans', sans-serif;
-    font-size:14px;
-    padding: 13px 16px;
-    outline:none;
-    transition: var(--transition);
-  }
-
-  .input:focus, .select:focus, .textarea:focus {
-    border-color: var(--orbit-light);
-    background: rgba(26,110,191,0.08);
-    box-shadow: 0 0 0 3px rgba(26,110,191,0.12);
-  }
-
-  .input::placeholder, .textarea::placeholder { color: rgba(255,255,255,0.2); }
-
-  .select {
-    cursor:pointer;
-    appearance:none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A9BB0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;
-    background-position: right 16px center;
-    padding-right:40px;
-  }
-
-  .select option { background: #162233; color: var(--text); }
-
-  .textarea { resize:vertical; min-height:100px; }
-
-  .field-row {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-  }
-
-  @media(max-width:540px){ .field-row { grid-template-columns:1fr; } }
-
-  /* Radio / checkbox cards */
-  .options-grid {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-
-  @media(max-width:480px){ .options-grid { grid-template-columns:1fr; } }
-
-  .option-card {
-    position:relative;
-  }
-
-  .option-card input {
-    position:absolute; opacity:0; width:0; height:0;
-  }
-
-  .option-card label {
-    display:flex;
-    align-items:flex-start;
-    gap:12px;
-    padding:14px 16px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor:pointer;
-    transition: var(--transition);
-    font-size:13px;
-    color: var(--text);
-    font-weight:400;
-    margin:0;
-  }
-
-  .option-card label:hover {
-    border-color: rgba(26,110,191,0.4);
-    background: rgba(26,110,191,0.06);
-  }
-
-  .option-card input:checked + label {
-    border-color: var(--orbit-light);
-    background: rgba(26,110,191,0.12);
-    color:#fff;
-  }
-
-  .option-dot {
-    width:16px; height:16px;
-    min-width:16px;
-    border-radius:50%;
-    border:2px solid rgba(255,255,255,0.2);
-    margin-top:1px;
-    transition:var(--transition);
-    position:relative;
-  }
-
-  .option-card input:checked + label .option-dot {
-    border-color: var(--orbit-light);
-    background: var(--orbit-light);
-  }
-
-  .option-card input:checked + label .option-dot::after {
-    content:'';
-    position:absolute;
-    inset:3px;
-    background:#fff;
-    border-radius:50%;
-  }
-
-  /* Checkbox variant */
-  .option-check {
-    width:16px; height:16px;
-    min-width:16px;
-    border-radius:5px;
-    border:2px solid rgba(255,255,255,0.2);
-    margin-top:1px;
-    transition:var(--transition);
-    position:relative;
-  }
-
-  .option-card input[type=checkbox]:checked + label .option-check {
-    border-color: var(--orbit-light);
-    background: var(--orbit-light);
-  }
-
-  .option-card input[type=checkbox]:checked + label .option-check::after {
-    content:'✓';
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:10px;
-    color:#fff;
-    font-weight:700;
-  }
-
-  /* Scale rating */
-  .scale-row {
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-
-  .scale-btn {
-    width:44px; height:44px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:rgba(255,255,255,0.04);
-    color:var(--muted);
-    font-size:14px;
-    font-weight:600;
-    cursor:pointer;
-    transition:var(--transition);
-    font-family:'Syne',sans-serif;
-  }
-
-  .scale-btn:hover { border-color:var(--orbit-light); color:#fff; }
-  .scale-btn.selected {
-    background: linear-gradient(135deg,var(--orbit),var(--orbit-light));
-    border-color: transparent;
-    color:#fff;
-    box-shadow:0 4px 12px rgba(26,110,191,0.4);
-  }
-
-  .scale-labels {
-    display:flex;
-    justify-content:space-between;
-    margin-top:8px;
-    font-size:11px;
-    color:var(--muted);
-  }
-
-  /* Buttons */
-  .btn-row {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:32px;
-    gap:12px;
-  }
-
-  .btn {
-    padding:13px 28px;
-    border-radius:var(--radius);
-    font-family:'Syne',sans-serif;
-    font-size:14px;
-    font-weight:700;
-    letter-spacing:.03em;
-    cursor:pointer;
-    border:none;
-    transition:var(--transition);
-  }
-
-  .btn-ghost {
-    background:transparent;
-    color:var(--muted);
-    border:1px solid var(--border);
-  }
-  .btn-ghost:hover { color:#fff; border-color:rgba(255,255,255,0.2); }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--orbit), var(--orbit-light));
-    color:#fff;
-    box-shadow: 0 4px 20px rgba(26,110,191,0.35);
-  }
-  .btn-primary:hover {
-    transform:translateY(-1px);
-    box-shadow: 0 6px 24px rgba(26,110,191,0.5);
-  }
-
-  /* Steps visibility */
-  .step { display:none; }
-  .step.active { display:block; animation: fadeUp .4s ease both; }
-
-  /* Result screen */
-  #result { display:none; }
-  #result.active { display:block; animation: fadeUp .6s ease both; }
-
-  .result-header {
-    text-align:center;
-    margin-bottom:36px;
-  }
-
-  .score-ring {
-    width:120px; height:120px;
-    margin:0 auto 24px;
-    position:relative;
-  }
-
-  .score-ring svg { transform:rotate(-90deg); }
-
-  .score-ring circle {
-    fill:none;
-    stroke-width:8;
-  }
-
-  .score-ring .track { stroke:rgba(255,255,255,0.07); }
-  .score-ring .fill {
-    stroke: url(#scoreGrad);
-    stroke-linecap:round;
-    transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1);
-  }
-
-  .score-value {
-    position:absolute;
-    inset:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .score-num {
-    font-family:'Syne',sans-serif;
-    font-size:28px;
-    font-weight:800;
-    color:#fff;
-  }
-
-  .score-max {
-    font-size:11px;
-    color:var(--muted);
-  }
-
-  .result-title {
-    font-family:'Syne',sans-serif;
-    font-size:22px;
-    font-weight:700;
-    color:#fff;
-    margin-bottom:8px;
-  }
-
-  .result-sub {
-    color:var(--muted);
-    font-size:14px;
-  }
-
-  .dimension-list {
-    display:grid;
-    gap:10px;
-    margin-bottom:28px;
-  }
-
-  .dimension-item {
-    display:flex;
-    align-items:center;
-    gap:14px;
-    padding:14px 16px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-  }
-
-  .dim-icon {
-    width:34px; height:34px;
-    border-radius:9px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:16px;
-    flex-shrink:0;
-  }
-
-  .dim-info { flex:1; }
-  .dim-name { font-size:13px; font-weight:500; color:#fff; margin-bottom:5px; }
-  .dim-bar-track {
-    height:4px;
-    background:rgba(255,255,255,0.07);
-    border-radius:99px;
-    overflow:hidden;
-  }
-  .dim-bar-fill {
-    height:100%;
-    border-radius:99px;
-    transition:width 1s .3s ease;
-  }
-  .dim-score-label {
-    font-size:12px;
-    font-weight:600;
-    margin-left:auto;
-    padding-left:12px;
-  }
-
-  .result-cta {
-    text-align:center;
-    padding:32px;
-    background: linear-gradient(135deg, rgba(26,110,191,0.15), rgba(0,212,200,0.08));
-    border:1px solid rgba(26,110,191,0.25);
-    border-radius:20px;
-  }
-
-  .result-cta h3 {
-    font-family:'Syne',sans-serif;
-    font-size:18px;
-    font-weight:700;
-    color:#fff;
-    margin-bottom:8px;
-  }
-
-  .result-cta p {
-    color:var(--muted);
-    font-size:13px;
-    margin-bottom:20px;
-  }
-
-  .btn-cta {
-    padding:15px 36px;
-    background:linear-gradient(135deg,var(--orbit),var(--accent));
-    color:#fff;
-    border:none;
-    border-radius:var(--radius);
-    font-family:'Syne',sans-serif;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-    letter-spacing:.03em;
-    transition:var(--transition);
-    box-shadow: 0 4px 20px rgba(0,212,200,0.25);
-  }
-
-  .btn-cta:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,212,200,0.35); }
-
-  /* Info note */
-  .info-note {
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-    padding:12px 14px;
-    background:var(--accent-dim);
-    border:1px solid rgba(0,212,200,0.2);
-    border-radius:10px;
-    margin-bottom:22px;
-    font-size:12.5px;
-    color:rgba(0,212,200,0.9);
-  }
-
-  .info-note svg { flex-shrink:0; margin-top:1px; }
-
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(18px); }
-    to { opacity:1; transform:translateY(0); }
-  }
-
-  .divider {
-    height:1px;
-    background:var(--border);
-    margin:28px 0;
-  }
-
-  .step-counter {
-    font-size:12px;
-    color:var(--muted);
-  }
+:root{--bg:#f7f5f2;--card:#fff;--text:#292724;--muted:#77716b;--line:#e8e2dc;--accent:#8b5e4b;--good:#347a57;--warn:#b67a1c;--bad:#b54b4b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff}button.secondary{background:#eee8e2;color:var(--text)}button.danger{background:#f5dddd;color:#8c3030}
+.app{display:flex;min-height:100vh}.side{width:220px;background:#fff;border-right:1px solid var(--line);padding:20px;position:sticky;top:0;height:100vh}.brand{font-weight:800;font-size:20px;margin-bottom:25px}.nav button{width:100%;text-align:left;background:transparent;color:var(--text);margin:3px 0}.nav button.active,.nav button:hover{background:#f1e8e2}.main{flex:1;padding:28px;max-width:1250px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.title{font-size:28px;font-weight:750}.sub{color:var(--muted);margin-top:3px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}.metric{font-size:27px;font-weight:750;margin-top:8px}.label{color:var(--muted);font-size:14px}.section{margin-top:22px}.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.section h2{font-size:19px;margin:0}.tablewrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px}.table{width:100%;border-collapse:collapse;min-width:650px}.table th,.table td{padding:12px;border-bottom:1px solid var(--line);text-align:left}.table th{font-size:13px;color:var(--muted);font-weight:600}.actions{display:flex;gap:7px}.pill{display:inline-block;padding:4px 8px;border-radius:99px;font-size:12px}.good{background:#e0f0e7;color:var(--good)}.warn{background:#fff0d4;color:var(--warn)}.bad{background:#f7dfdf;color:var(--bad)}.form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;padding:10px;border:1px solid #ddd5ce;border-radius:10px;background:#fff}.full{grid-column:1/-1}.modal{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.modalbox{background:#fff;border-radius:18px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:22px}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.hidden{display:none!important}.recipe-line{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}.notice{padding:13px;border-radius:12px;background:#f2ece7;margin:12px 0}.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.authbox{background:#fff;border:1px solid var(--line);border-radius:20px;padding:25px;width:min(420px,100%)}.authbox h1{margin-top:0}.error{color:#a33;background:#f8e4e4;padding:10px;border-radius:10px;margin:10px 0}.mobilebar{display:none}
+@media(max-width:800px){.side{display:none}.main{padding:18px 14px 85px}.grid{grid-template-columns:repeat(2,1fr)}.form{grid-template-columns:1fr}.mobilebar{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:8;padding:7px;gap:4px}.mobilebar button{flex:1;background:transparent;color:var(--text);padding:8px 4px;font-size:12px}.mobilebar button.active{background:#f1e8e2}.top .secondary{display:none}.recipe-line{grid-template-columns:1fr 1fr}.recipe-line select{grid-column:1/-1}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="root"></div>
+<div class="modal hidden" id="modal"><div class="modalbox" id="modalbox"></div></div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <div class="logo-icon"></div>
-      <span class="logo-text">OSSUU</span>
-    </div>
-    <div class="badge">Diagnóstico Gratuito</div>
-    <h1>Conoce el estado real<br>de <span>tu negocio</span></h1>
-    <p>Responde 5 minutos de preguntas y recibe una evaluación personalizada + propuesta de mejora sin compromiso.</p>
-  </div>
+const SUPABASE_URL = "https://swoendvkjyrgmyaytrnr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Q1vDioyCIY75_94N_6idRw_IjLS98fG";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <!-- Progress -->
-  <div class="progress-wrap">
-    <div class="progress-labels">
-      <span id="stepLabel">Paso 1 de 5</span>
-      <span id="pct">0%</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-    </div>
-    <div class="step-dots">
-      <div class="step-dot active" id="dot1"></div>
-      <div class="step-dot" id="dot2"></div>
-      <div class="step-dot" id="dot3"></div>
-      <div class="step-dot" id="dot4"></div>
-      <div class="step-dot" id="dot5"></div>
-    </div>
-  </div>
+let db={settings:{iva:19,target:40,currency:'CLP'},ingredients:[],recipes:[],products:[],fixed:[],history:[]};
+let page='dashboard', loading=false, breakevenProductId=null;
 
-  <!-- STEP 1: Datos del negocio -->
-  <div class="step active card" id="step1">
-    <div class="section-label">Sección 1</div>
-    <h2>Información del negocio</h2>
+const root=document.getElementById('root');
+const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CL');
+const fmt=n=>Number(n||0).toLocaleString('es-CL',{maximumFractionDigits:1});
+const ingredientCost=i=>i&&i.purchase_qty>0?Number(i.net_price)/Number(i.purchase_qty):0;
+const recipeCost=r=>(r?.lines||[]).reduce((s,l)=>s+ingredientCost(db.ingredients.find(i=>i.id===l.ingredient_id))*Number(l.quantity||0),0);
+const productCost=p=>{const r=db.recipes.find(x=>x.id===p.recipe_id);return (r?recipeCost(r)/Math.max(1,Number(r.yield_units)):0)+Number(p.packaging||0)+Number(p.labor||0)};
+const margin=p=>p.sale_price_net?((Number(p.sale_price_net)-productCost(p))/Number(p.sale_price_net)*100):0;
+const monthlyFixed=()=>db.fixed.reduce((s,x)=>s+Number(x.amount||0),0);
 
-    <div class="info-note">
-      <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 7v4M8 5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-      Tus datos son confidenciales y solo se usan para personalizar tu diagnóstico.
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label>Nombre del negocio <span class="req">*</span></label>
-        <input class="input" id="f_nombre" type="text" placeholder="Ej: Heladería El Sur">
-      </div>
-      <div class="field">
-        <label>Tu nombre <span class="req">*</span></label>
-        <input class="input" id="f_contacto" type="text" placeholder="Nombre y apellido">
-      </div>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label>Correo electrónico <span class="req">*</span></label>
-        <input class="input" id="f_email" type="email" placeholder="tu@correo.com">
-      </div>
-      <div class="field">
-        <label>Teléfono / WhatsApp</label>
-        <input class="input" id="f_tel" type="tel" placeholder="+56 9 XXXX XXXX">
-      </div>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label>Rubro del negocio <span class="req">*</span></label>
-        <select class="select" id="f_rubro">
-          <option value="">Selecciona un rubro</option>
-          <option>Heladería / Café / Pastelería</option>
-          <option>Restaurante / Comida</option>
-          <option>Comercio retail / Tienda</option>
-          <option>Servicios profesionales</option>
-          <option>E-commerce / Tienda online</option>
-          <option>Industria / Manufactura</option>
-          <option>Otro</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Años en operación</label>
-        <select class="select" id="f_anos">
-          <option value="">Selecciona</option>
-          <option>Menos de 1 año</option>
-          <option>1 a 3 años</option>
-          <option>3 a 7 años</option>
-          <option>Más de 7 años</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>N° de empleados</label>
-      <div class="options-grid">
-        <div class="option-card">
-          <input type="radio" name="empleados" id="e1" value="Solo yo">
-          <label for="e1"><span class="option-dot"></span>Solo yo</label>
-        </div>
-        <div class="option-card">
-          <input type="radio" name="empleados" id="e2" value="2-5">
-          <label for="e2"><span class="option-dot"></span>2 a 5 personas</label>
-        </div>
-        <div class="option-card">
-          <input type="radio" name="empleados" id="e3" value="6-15">
-          <label for="e3"><span class="option-dot"></span>6 a 15 personas</label>
-        </div>
-        <div class="option-card">
-          <input type="radio" name="empleados" id="e4" value="16+">
-          <label for="e4"><span class="option-dot"></span>Más de 15</label>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <div></div>
-      <button class="btn btn-primary" onclick="goTo(2)">Continuar →</button>
-    </div>
-  </div>
-
-  <!-- STEP 2: Datos y tecnología -->
-  <div class="step card" id="step2">
-    <div class="section-label">Sección 2</div>
-    <h2>Datos y tecnología actual</h2>
-
-    <div class="field">
-      <label>¿Cómo registras actualmente tus ventas?</label>
-      <div class="options-grid">
-        <div class="option-card">
-          <input type="radio" name="reg_ventas" id="rv1" value="manual">
-          <label for="rv1"><span class="option-dot"></span>📝 Papel / cuaderno</label>
-        </div>
-        <div class="option-card">
-          <input type="radio" name="reg_ventas" id="rv2" value="excel">
-          <label for="rv2"><span class="option-dot"></span>📊 Excel / Google Sheets</label>
-        </div>
-        <div class="option-card">
-          <input type="radio" name="reg_ventas" id="rv3" value="software">
-          <label for="rv3"><span class="option-dot"></span>💻 Software o app</label>
-        </div>
-        <div class="option-card">
-          <input type="radio" name="reg_ventas" id="rv4" value="nada">
-          <label for="rv4"><span class="option-dot"></span>❌ No registro</label>
-        </div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Qué herramientas digitales usas? (selecciona todas las que aplican)</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="checkbox" id="h1"><label for="h1"><span class="option-check"></span>WhatsApp Business</label></div>
-        <div class="option-card"><input type="checkbox" id="h2"><label for="h2"><span class="option-check"></span>Redes sociales</label></div>
-        <div class="option-card"><input type="checkbox" id="h3"><label for="h3"><span class="option-check"></span>Sitio web propio</label></div>
-        <div class="option-card"><input type="checkbox" id="h4"><label for="h4"><span class="option-check"></span>Sistema POS / caja</label></div>
-        <div class="option-card"><input type="checkbox" id="h5"><label for="h5"><span class="option-check"></span>Software contable</label></div>
-        <div class="option-card"><input type="checkbox" id="h6"><label for="h6"><span class="option-check"></span>Ninguna</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Con qué frecuencia analizas los números de tu negocio?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="frec" id="fr1" value="nunca"><label for="fr1"><span class="option-dot"></span>Casi nunca</label></div>
-        <div class="option-card"><input type="radio" name="frec" id="fr2" value="mensual"><label for="fr2"><span class="option-dot"></span>Una vez al mes</label></div>
-        <div class="option-card"><input type="radio" name="frec" id="fr3" value="semanal"><label for="fr3"><span class="option-dot"></span>Semanalmente</label></div>
-        <div class="option-card"><input type="radio" name="frec" id="fr4" value="diario"><label for="fr4"><span class="option-dot"></span>Todos los días</label></div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goTo(1)">← Atrás</button>
-      <button class="btn btn-primary" onclick="goTo(3)">Continuar →</button>
-    </div>
-  </div>
-
-  <!-- STEP 3: Operaciones -->
-  <div class="step card" id="step3">
-    <div class="section-label">Sección 3</div>
-    <h2>Operaciones y procesos</h2>
-
-    <div class="field">
-      <label>¿Cuál es el mayor cuello de botella en tu operación diaria?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="cb" id="cb1" value="tiempo"><label for="cb1"><span class="option-dot"></span>⏱ Falta de tiempo</label></div>
-        <div class="option-card"><input type="radio" name="cb" id="cb2" value="personal"><label for="cb2"><span class="option-dot"></span>👥 Gestión del personal</label></div>
-        <div class="option-card"><input type="radio" name="cb" id="cb3" value="inventario"><label for="cb3"><span class="option-dot"></span>📦 Control de inventario</label></div>
-        <div class="option-card"><input type="radio" name="cb" id="cb4" value="clientes"><label for="cb4"><span class="option-dot"></span>🤝 Atención al cliente</label></div>
-        <div class="option-card"><input type="radio" name="cb" id="cb5" value="finanzas"><label for="cb5"><span class="option-dot"></span>💰 Control financiero</label></div>
-        <div class="option-card"><input type="radio" name="cb" id="cb6" value="ventas"><label for="cb6"><span class="option-dot"></span>📈 Atraer más ventas</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Tienes procesos documentados o formalizados?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="proc" id="p1" value="no"><label for="p1"><span class="option-dot"></span>No, todo está en mi cabeza</label></div>
-        <div class="option-card"><input type="radio" name="proc" id="p2" value="parcial"><label for="p2"><span class="option-dot"></span>Algunos procesos sí</label></div>
-        <div class="option-card"><input type="radio" name="proc" id="p3" value="si"><label for="p3"><span class="option-dot"></span>Sí, tengo documentación</label></div>
-        <div class="option-card"><input type="radio" name="proc" id="p4" value="sistema"><label for="p4"><span class="option-dot"></span>Uso un sistema formal</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Cuántas horas a la semana dedicas a tareas administrativas?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="horas" id="h_a1" value="<5"><label for="h_a1"><span class="option-dot"></span>Menos de 5 horas</label></div>
-        <div class="option-card"><input type="radio" name="horas" id="h_a2" value="5-15"><label for="h_a2"><span class="option-dot"></span>5 a 15 horas</label></div>
-        <div class="option-card"><input type="radio" name="horas" id="h_a3" value="15-30"><label for="h_a3"><span class="option-dot"></span>15 a 30 horas</label></div>
-        <div class="option-card"><input type="radio" name="horas" id="h_a4" value=">30"><label for="h_a4"><span class="option-dot"></span>Más de 30 horas</label></div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goTo(2)">← Atrás</button>
-      <button class="btn btn-primary" onclick="goTo(4)">Continuar →</button>
-    </div>
-  </div>
-
-  <!-- STEP 4: Ventas y clientes -->
-  <div class="step card" id="step4">
-    <div class="section-label">Sección 4</div>
-    <h2>Ventas y clientes</h2>
-
-    <div class="field">
-      <label>¿Conoces cuál es tu producto o servicio más rentable?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="rentable" id="rt1" value="no"><label for="rt1"><span class="option-dot"></span>No lo sé</label></div>
-        <div class="option-card"><input type="radio" name="rentable" id="rt2" value="intuicion"><label for="rt2"><span class="option-dot"></span>Lo intuyo, sin datos</label></div>
-        <div class="option-card"><input type="radio" name="rentable" id="rt3" value="parcial"><label for="rt3"><span class="option-dot"></span>Tengo idea aproximada</label></div>
-        <div class="option-card"><input type="radio" name="rentable" id="rt4" value="si"><label for="rt4"><span class="option-dot"></span>Sí, lo tengo medido</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Tienes una base de datos o registro de tus clientes?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="clientes_db" id="cd1" value="no"><label for="cd1"><span class="option-dot"></span>No tengo ninguno</label></div>
-        <div class="option-card"><input type="radio" name="clientes_db" id="cd2" value="basico"><label for="cd2"><span class="option-dot"></span>Lista básica / informal</label></div>
-        <div class="option-card"><input type="radio" name="clientes_db" id="cd3" value="excel"><label for="cd3"><span class="option-dot"></span>Excel o similar</label></div>
-        <div class="option-card"><input type="radio" name="clientes_db" id="cd4" value="crm"><label for="cd4"><span class="option-dot"></span>CRM o sistema formal</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Del 1 al 5, ¿cuánto crees que podrías crecer si tuvieras mejores datos e inteligencia de negocio?</label>
-      <div class="scale-row" id="scaleGrowth">
-        <button class="scale-btn" onclick="selectScale('scaleGrowth',1)">1</button>
-        <button class="scale-btn" onclick="selectScale('scaleGrowth',2)">2</button>
-        <button class="scale-btn" onclick="selectScale('scaleGrowth',3)">3</button>
-        <button class="scale-btn" onclick="selectScale('scaleGrowth',4)">4</button>
-        <button class="scale-btn" onclick="selectScale('scaleGrowth',5)">5</button>
-      </div>
-      <div class="scale-labels"><span>Poco impacto</span><span>Mucho impacto</span></div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goTo(3)">← Atrás</button>
-      <button class="btn btn-primary" onclick="goTo(5)">Continuar →</button>
-    </div>
-  </div>
-
-  <!-- STEP 5: Objetivos -->
-  <div class="step card" id="step5">
-    <div class="section-label">Sección 5</div>
-    <h2>Objetivos y expectativas</h2>
-
-    <div class="field">
-      <label>¿Cuál es tu principal objetivo para los próximos 6 meses? (puedes marcar hasta 2)</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="checkbox" id="obj1"><label for="obj1"><span class="option-check"></span>📈 Aumentar ventas</label></div>
-        <div class="option-card"><input type="checkbox" id="obj2"><label for="obj2"><span class="option-check"></span>⚙️ Automatizar tareas</label></div>
-        <div class="option-card"><input type="checkbox" id="obj3"><label for="obj3"><span class="option-check"></span>📊 Tener mejores reportes</label></div>
-        <div class="option-card"><input type="checkbox" id="obj4"><label for="obj4"><span class="option-check"></span>🧠 Entender a mis clientes</label></div>
-        <div class="option-card"><input type="checkbox" id="obj5"><label for="obj5"><span class="option-check"></span>💸 Reducir costos</label></div>
-        <div class="option-card"><input type="checkbox" id="obj6"><label for="obj6"><span class="option-check"></span>🚀 Escalar el negocio</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Cuál es tu presupuesto mensual disponible para tecnología/consultoría?</label>
-      <div class="options-grid">
-        <div class="option-card"><input type="radio" name="budget" id="b1" value="0-50k"><label for="b1"><span class="option-dot"></span>Menos de $50.000</label></div>
-        <div class="option-card"><input type="radio" name="budget" id="b2" value="50-150k"><label for="b2"><span class="option-dot"></span>$50.000 – $150.000</label></div>
-        <div class="option-card"><input type="radio" name="budget" id="b3" value="150-500k"><label for="b3"><span class="option-dot"></span>$150.000 – $500.000</label></div>
-        <div class="option-card"><input type="radio" name="budget" id="b4" value=">500k"><label for="b4"><span class="option-dot"></span>Más de $500.000</label></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>¿Algo más que quieras contarnos sobre tu negocio o desafíos?</label>
-      <textarea class="textarea" id="f_extra" placeholder="Cuéntanos sobre tus mayores desafíos, problemas puntuales o lo que más te gustaría mejorar..."></textarea>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goTo(4)">← Atrás</button>
-      <button class="btn btn-primary" onclick="showResult()">Ver mi diagnóstico ✦</button>
-    </div>
-  </div>
-
-  <!-- RESULTADO -->
-  <div id="result">
-    <div class="card">
-      <div class="result-header">
-        <div class="score-ring">
-          <svg width="120" height="120" viewBox="0 0 120 120">
-            <defs>
-              <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#1A6EBF"/>
-                <stop offset="100%" stop-color="#00D4C8"/>
-              </linearGradient>
-            </defs>
-            <circle class="track" cx="60" cy="60" r="52" stroke-width="8"/>
-            <circle class="fill" id="scoreCircle" cx="60" cy="60" r="52" stroke-width="8"
-              stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
-          </svg>
-          <div class="score-value">
-            <span class="score-num" id="scoreNum">0</span>
-            <span class="score-max">/100</span>
-          </div>
-        </div>
-        <div class="result-title" id="resultTitle">Calculando...</div>
-        <div class="result-sub" id="resultSub"></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="section-label" style="margin-bottom:14px">Evaluación por dimensión</div>
-      <div class="dimension-list" id="dimList"></div>
-
-      <div class="result-cta">
-        <h3>¿Listo para tomar el control de tu negocio?</h3>
-        <p>Nuestro equipo revisará tu diagnóstico y te enviará una propuesta personalizada sin costo ni compromiso.</p>
-        <button class="btn-cta" onclick="sendResults()">Recibir propuesta gratuita →</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-let currentStep = 1;
-const totalSteps = 5;
-let scaleValues = {};
-
-function goTo(step) {
-  document.getElementById('step'+currentStep).classList.remove('active');
-  document.getElementById('dot'+currentStep).classList.remove('active');
-  document.getElementById('dot'+currentStep).classList.add('done');
-  currentStep = step;
-  document.getElementById('step'+step).classList.add('active');
-  const dots = document.querySelectorAll('.step-dot');
-  dots.forEach((d,i)=>{
-    d.classList.remove('active');
-    if(i<step-1) d.classList.add('done'); else d.classList.remove('done');
-  });
-  document.getElementById('dot'+step).classList.add('active');
-  const pct = Math.round(((step-1)/totalSteps)*100);
-  document.getElementById('progressFill').style.width = pct+'%';
-  document.getElementById('pct').textContent = pct+'%';
-  document.getElementById('stepLabel').textContent = `Paso ${step} de ${totalSteps}`;
-  window.scrollTo({top:0, behavior:'smooth'});
+async function loadData(){
+  const u=(await supabase.auth.getUser()).data.user;
+  if(!u)return;
+  const [ing,rec,lines,prod,fixed,settings,hist]=await Promise.all([
+    supabase.from('ingredients').select('*').order('name'),
+    supabase.from('recipes').select('*').order('name'),
+    supabase.from('recipe_lines').select('*'),
+    supabase.from('products').select('*').order('name'),
+    supabase.from('fixed_costs').select('*').order('name'),
+    supabase.from('settings').select('*').maybeSingle(),
+    supabase.from('ingredient_price_history').select('*').order('changed_at',{ascending:false})
+  ]);
+  for(const r of [ing,rec,lines,prod,fixed,settings,hist])if(r.error)throw r.error;
+  db.ingredients=ing.data||[];db.recipes=(rec.data||[]).map(r=>({...r,lines:(lines.data||[]).filter(l=>l.recipe_id===r.id)}));
+  db.products=prod.data||[];db.fixed=fixed.data||[];db.settings={iva:settings.data?.iva??19,target_margin:settings.data?.target_margin??40,currency:settings.data?.currency??'CLP'};
+  db.history=hist.data||[];
 }
 
-function selectScale(id, val) {
-  scaleValues[id] = val;
-  const btns = document.querySelectorAll(`#${id} .scale-btn`);
-  btns.forEach((b,i)=>{
-    b.classList.toggle('selected', i+1===val);
-  });
+async function init(){
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session){authScreen();return}
+  try{await loadData();render();}catch(e){root.innerHTML=`<div class="auth"><div class="authbox"><h1>⚠️ No pude cargar tus datos</h1><p>${e.message}</p><button onclick="location.reload()">Reintentar</button></div></div>`}
 }
+supabase.auth.onAuthStateChange((_event,session)=>{if(!session)authScreen();else init()});
 
-function calcScore() {
-  let score = 0;
-
-  // Datos y tecnología (30 pts)
-  const regMap = {nada:0, manual:5, excel:10, software:15};
-  const selReg = document.querySelector('input[name=reg_ventas]:checked');
-  score += selReg ? (regMap[selReg.value]||0) : 0;
-
-  const frecMap = {nunca:0, mensual:4, semanal:7, diario:10};
-  const selFrec = document.querySelector('input[name=frec]:checked');
-  score += selFrec ? (frecMap[selFrec.value]||0) : 0;
-
-  // Herramientas digitales (5 pts max)
-  let tools = ['h1','h2','h3','h4','h5'].filter(id=>document.getElementById(id)?.checked).length;
-  score += Math.min(tools*1.5, 5);
-
-  // Operaciones (25 pts)
-  const procMap = {no:0, parcial:8, si:14, sistema:20};
-  const selProc = document.querySelector('input[name=proc]:checked');
-  score += selProc ? (procMap[selProc.value]||0) : 0;
-
-  const horasMap = {'<5':5, '5-15':3, '15-30':1, '>30':0};
-  const selHoras = document.querySelector('input[name=horas]:checked');
-  score += selHoras ? (horasMap[selHoras.value]||0) : 0;
-
-  // Ventas/clientes (25 pts)
-  const rentMap = {no:0, intuicion:5, parcial:9, si:15};
-  const selRent = document.querySelector('input[name=rentable]:checked');
-  score += selRent ? (rentMap[selRent.value]||0) : 0;
-
-  const cdbMap = {no:0, basico:2, excel:5, crm:10};
-  const selCdb = document.querySelector('input[name=clientes_db]:checked');
-  score += selCdb ? (cdbMap[selCdb.value]||0) : 0;
-
-  return Math.min(Math.round(score), 100);
+function authScreen(){
+ root.innerHTML=`<div class="auth"><div class="authbox">
+ <h1>🍰 Costos Pastelería</h1><p class="sub">Tus datos se sincronizan entre celular, tablet y computador.</p>
+ <div id="autherr"></div>
+ <div class="field"><label>Correo</label><input id="email" type="email" placeholder="tu correo"></div>
+ <div class="field" style="margin-top:10px"><label>Contraseña</label><input id="pass" type="password" placeholder="mínimo 6 caracteres"></div>
+ <div style="display:flex;gap:8px;margin-top:15px"><button onclick="login()">Entrar</button><button class="secondary" onclick="signup()">Crear cuenta</button></div>
+ </div></div>`;
 }
+async function login(){const emailValue=document.getElementById('email').value.trim();const passValue=document.getElementById('pass').value;const r=await supabase.auth.signInWithPassword({email:emailValue,password:passValue});if(r.error)authError(r.error.message)}
+async function signup(){const emailValue=document.getElementById('email').value.trim();const passValue=document.getElementById('pass').value;if(!emailValue||!passValue)return authError('Escribe tu correo y una contraseña.');const r=await supabase.auth.signUp({email:emailValue,password:passValue});if(r.error)authError(r.error.message);else alert('Cuenta creada. Si Supabase pide confirmar tu correo, revisa tu email y luego vuelve a entrar.')}
+function authError(x){document.getElementById('autherr').innerHTML=`<div class="error">${x}</div>`}
 
-function getDimensions(score) {
-  const s1 = document.querySelector('input[name=reg_ventas]:checked');
-  const s2 = document.querySelector('input[name=frec]:checked');
-  const s3 = document.querySelector('input[name=proc]:checked');
-  const s4 = document.querySelector('input[name=rentable]:checked');
-  const s5 = document.querySelector('input[name=clientes_db]:checked');
+function nav(){const items=[['dashboard','🏠 Inicio'],['ingredients','🥣 Ingredientes'],['recipes','📖 Recetas'],['products','🍪 Productos'],['costs','💸 Costos'],['breakeven','🎯 Equilibrio'],['settings','⚙️ Configuración']];return items.map(x=>`<button class="${page===x[0]?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('')}
+function render(){root.innerHTML=`<div class="app"><aside class="side"><div class="brand">🍰 Costos Pastelería</div><div class="nav">${nav()}</div><button class="secondary" style="margin-top:20px;width:100%" onclick="logout()">Cerrar sesión</button></aside><main class="main"><div id="view"></div></main></div><div class="mobilebar">${nav()}</div>`;draw()}
+function go(p){page=p;draw()}
+function draw(){const v=document.getElementById('view');if(!v)return;if(page==='dashboard')v.innerHTML=dashboard();if(page==='ingredients')v.innerHTML=ingredients();if(page==='recipes')v.innerHTML=recipes();if(page==='products')v.innerHTML=products();if(page==='costs')v.innerHTML=costs();if(page==='breakeven')v.innerHTML=breakeven();if(page==='settings')v.innerHTML=settings()}
+async function logout(){await supabase.auth.signOut()}
 
-  const dims = [
-    {
-      icon:'📊', name:'Gestión de datos',
-      score: s1 ? ({nada:10,manual:30,excel:65,software:90}[s1.value]||50) : 20,
-      color:'#1A6EBF'
-    },
-    {
-      icon:'⚙️', name:'Madurez operacional',
-      score: s3 ? ({no:15,parcial:45,si:75,sistema:95}[s3.value]||40) : 20,
-      color:'#00D4C8'
-    },
-    {
-      icon:'📈', name:'Inteligencia de ventas',
-      score: s4 ? ({no:10,intuicion:35,parcial:60,si:90}[s4.value]||35) : 20,
-      color:'#2A8FE8'
-    },
-    {
-      icon:'🤝', name:'Conocimiento del cliente',
-      score: s5 ? ({no:10,basico:30,excel:60,crm:90}[s5.value]||30) : 15,
-      color:'#38BDF8'
-    },
-    {
-      icon:'🔄', name:'Frecuencia de análisis',
-      score: s2 ? ({nunca:5,mensual:45,semanal:75,diario:95}[s2.value]||30) : 10,
-      color:'#818CF8'
-    },
-  ];
-  return dims;
-}
+function dashboard(){let ps=db.products.filter(p=>p.active),avgc=ps.length?ps.reduce((s,p)=>s+productCost(p),0)/ps.length:0,avgp=ps.length?ps.reduce((s,p)=>s+Number(p.sale_price_net),0)/ps.length:0,avgm=ps.length?ps.reduce((s,p)=>s+margin(p),0)/ps.length:0;return `<div class="top"><div><div class="title">Resumen</div><div class="sub">Tus costos, sincronizados.</div></div><button onclick="openProduct()">+ Crear producto</button></div><div class="grid"><div class="card"><div class="label">Productos</div><div class="metric">${db.products.length}</div></div><div class="card"><div class="label">Costo promedio</div><div class="metric">${money(avgc)}</div></div><div class="card"><div class="label">Precio promedio</div><div class="metric">${money(avgp)}</div></div><div class="card"><div class="label">Margen promedio</div><div class="metric">${fmt(avgm)}%</div></div><div class="card"><div class="label">Costos fijos mensuales</div><div class="metric">${money(monthlyFixed())}</div></div><div class="card"><div class="label">IVA</div><div class="metric">${db.settings.iva}%</div></div></div><div class="section"><div class="sectionhead"><h2>Productos</h2><button class="secondary" onclick="go('products')">Ver todos</button></div><div class="tablewrap"><table class="table"><tr><th>Producto</th><th>Costo</th><th>Venta neta</th><th>Margen</th></tr>${ps.slice(0,8).map(p=>`<tr><td>${p.name}</td><td>${money(productCost(p))}</td><td>${money(p.sale_price_net)}</td><td><span class="pill ${margin(p)>=db.settings.target_margin?'good':margin(p)>=0?'warn':'bad'}">${fmt(margin(p))}%</span></td></tr>`).join('')||'<tr><td colspan="4" class="label">Aún no hay productos.</td></tr>'}</table></div></div>`}
 
-function getLevel(score) {
-  if(score < 30) return {title:'Negocio en etapa inicial', sub:'Tienes mucho potencial por explorar. Con las herramientas correctas puedes transformar radicalmente tu operación.', color:'#F59E0B'};
-  if(score < 55) return {title:'Negocio en desarrollo', sub:'Ya tienes bases sólidas. Con mejor organización y datos puedes acelerar tu crecimiento significativamente.', color:'#3B82F6'};
-  if(score < 75) return {title:'Negocio en crecimiento', sub:'Vas por buen camino. Optimizar tus procesos y automatizar tareas te llevará al siguiente nivel.', color:'#10B981'};
-  return {title:'Negocio avanzado', sub:'Tu negocio está bien gestionado. El siguiente paso es inteligencia predictiva y automatización avanzada.', color:'#8B5CF6'};
-}
+function ingredients(){return `<div class="top"><div><div class="title">Ingredientes</div><div class="sub">Un cambio aquí se refleja automáticamente en tus recetas.</div></div><button onclick="openIngredient()">+ Agregar</button></div><div class="notice">IVA actual: <b>${db.settings.iva}%</b>. El precio ingresado es neto.</div><div class="tablewrap"><table class="table"><tr><th>Ingrediente</th><th>Categoría</th><th>Formato</th><th>Precio neto</th><th>Costo unitario</th><th></th></tr>${db.ingredients.map(i=>`<tr><td>${i.name}</td><td>${i.category||''}</td><td>${i.purchase_qty} ${i.unit}</td><td>${money(i.net_price)}</td><td>${money(ingredientCost(i))}</td><td class="actions"><button class="secondary" onclick="openIngredient('${i.id}')">Editar</button><button class="danger" onclick="removeRow('ingredients','${i.id}')">Eliminar</button></td></tr>`).join('')}</table></div>`}
+function recipes(){return `<div class="top"><div><div class="title">Recetas</div><div class="sub">Costos actualizados automáticamente.</div></div><button onclick="openRecipe()">+ Nueva receta</button></div><div class="grid">${db.recipes.map(r=>`<div class="card"><b>${r.name}</b><div class="sub">${r.category||''} · ${r.yield_units} unidades</div><div class="metric">${money(recipeCost(r))}</div><div class="label">${money(recipeCost(r)/Math.max(1,r.yield_units))} por unidad</div><div class="actions" style="margin-top:14px"><button class="secondary" onclick="openRecipe('${r.id}')">Editar</button><button class="danger" onclick="removeRecipe('${r.id}')">Eliminar</button></div></div>`).join('')||'<div class="card">No hay recetas.</div>'}</div>`}
+function products(){return `<div class="top"><div><div class="title">Productos</div><div class="sub">Costo real y rentabilidad.</div></div><button onclick="openProduct()">+ Nuevo producto</button></div><div class="tablewrap"><table class="table"><tr><th>Producto</th><th>Costo</th><th>Venta neta</th><th>Ganancia</th><th>Margen</th><th></th></tr>${db.products.map(p=>{let c=productCost(p),g=Number(p.sale_price_net)-c,m=margin(p);return `<tr><td><b>${p.name}</b><br><span class="label">${db.recipes.find(r=>r.id===p.recipe_id)?.name||'Sin receta'}</span></td><td>${money(c)}</td><td>${money(p.sale_price_net)}</td><td>${money(g)}</td><td><span class="pill ${m>=db.settings.target_margin?'good':m>=0?'warn':'bad'}">${fmt(m)}%</span></td><td class="actions"><button class="secondary" onclick="openProduct('${p.id}')">Editar</button><button class="danger" onclick="removeRow('products','${p.id}')">Eliminar</button></td></tr>`}).join('')}</table></div>`}
+function costs(){return `<div class="top"><div><div class="title">Otros costos</div><div class="sub">Gastos fijos mensuales y costos por producto.</div></div><button onclick="openFixed()">+ Costo fijo</button></div><div class="card"><div class="label">Costos fijos mensuales</div><div class="metric">${money(monthlyFixed())}</div></div><div class="section tablewrap"><table class="table"><tr><th>Nombre</th><th>Periodicidad</th><th>Monto</th><th></th></tr>${db.fixed.map(x=>`<tr><td>${x.name}</td><td>${x.period}</td><td>${money(x.amount)}</td><td class="actions"><button class="secondary" onclick="openFixed('${x.id}')">Editar</button><button class="danger" onclick="removeRow('fixed_costs','${x.id}')">Eliminar</button></td></tr>`).join('')}</table></div><div class="notice">Packaging y mano de obra se ingresan por producto para mantener el uso diario simple.</div>`}
+function breakeven(){let p=db.products.find(x=>x.id===breakevenProductId&&x.active)||db.products.find(x=>x.active),price=p?Number(p.sale_price_net):0,c=p?productCost(p):0,con=price-c,u=con>0?monthlyFixed()/con:0;return `<div class="top"><div><div class="title">Punto de equilibrio</div><div class="sub">Una estimación simple para cubrir tus costos fijos.</div></div></div><div class="card"><div class="field"><label>Producto</label><select onchange="beSelect(this.value)">${db.products.filter(x=>x.active).map(x=>`<option value="${x.id}" ${x.id===p?.id?'selected':''}>${x.name}</option>`).join('')}</select></div><div class="grid" style="margin-top:20px"><div><div class="label">Costos fijos</div><div class="metric">${money(monthlyFixed())}</div></div><div><div class="label">Margen contribución</div><div class="metric">${money(con)}</div></div><div><div class="label">Punto de equilibrio</div><div class="metric">${isFinite(u)?Math.ceil(u):'—'} un.</div></div><div><div class="label">Ventas necesarias</div><div class="metric">${isFinite(u)?money(Math.ceil(u)*price):'—'}</div></div></div><div class="notice">Necesitas vender aproximadamente <b>${isFinite(u)?Math.ceil(u):'—'} unidades al mes</b> para cubrir tus costos fijos.</div></div>`}
+function beSelect(id){breakevenProductId=id;draw()}
 
-function animateScore(target) {
-  let current = 0;
-  const duration = 1500;
-  const step = duration / target;
-  const circ = 2 * Math.PI * 52;
-  const timer = setInterval(()=>{
-    current = Math.min(current+1, target);
-    document.getElementById('scoreNum').textContent = current;
-    const offset = circ - (circ * current / 100);
-    document.getElementById('scoreCircle').style.strokeDashoffset = offset;
-    if(current >= target) clearInterval(timer);
-  }, step);
-}
+function settings(){return `<div class="top"><div><div class="title">Configuración</div><div class="sub">Parámetros generales.</div></div></div><div class="card"><div class="form"><div class="field"><label>IVA (%)</label><input id="iva" type="number" value="${db.settings.iva}"></div><div class="field"><label>Margen objetivo (%)</label><input id="target" type="number" value="${db.settings.target_margin}"></div></div><button style="margin-top:15px" onclick="saveSettings()">Guardar</button></div><div class="notice">Estos cálculos son para gestión interna y no reemplazan una declaración tributaria.</div>`}
 
-function showResult() {
-  const steps = document.querySelectorAll('.step');
-  steps.forEach(s=>s.classList.remove('active'));
-  document.querySelector('.progress-wrap').style.display='none';
+function openModal(s){document.getElementById('modalbox').innerHTML=s;document.getElementById('modal').classList.remove('hidden')}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal()}
 
-  const score = calcScore();
-  const level = getLevel(score);
-  const dims = getDimensions(score);
-
-  document.getElementById('result').classList.add('active');
-  document.getElementById('resultTitle').textContent = level.title;
-  document.getElementById('resultSub').textContent = level.sub;
-
-  // Render dimensions
-  const list = document.getElementById('dimList');
-  list.innerHTML = '';
-  dims.forEach(d=>{
-    const label = d.score<40 ? 'Área de mejora' : d.score<70 ? 'En desarrollo' : 'Fortaleza';
-    list.innerHTML += `
-      <div class="dimension-item">
-        <div class="dim-icon" style="background:${d.color}22">${d.icon}</div>
-        <div class="dim-info">
-          <div class="dim-name">${d.name}</div>
-          <div class="dim-bar-track">
-            <div class="dim-bar-fill" style="width:${d.score}%;background:${d.color}"></div>
-          </div>
-        </div>
-        <div class="dim-score-label" style="color:${d.color}">${label}</div>
-      </div>`;
-  });
-
-  setTimeout(()=>animateScore(score), 300);
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-async function sendResults() {
-  const btn = document.querySelector('.btn-cta');
-  btn.textContent = 'Enviando...';
-  btn.disabled = true;
-
-  const score = calcScore();
-  const dims = getDimensions(score);
-  const level = getLevel(score);
-
-  const herramientas = ['WhatsApp Business','Redes sociales','Sitio web','Sistema POS','Software contable']
-    .filter((_,i) => document.getElementById('h'+(i+1))?.checked).join(', ') || 'Ninguna';
-
-  const objetivos = ['Aumentar ventas','Automatizar tareas','Mejores reportes','Entender clientes','Reducir costos','Escalar negocio']
-    .filter((_,i) => document.getElementById('obj'+(i+1))?.checked).join(', ') || 'No especificado';
-
-  const data = {
-    negocio: document.getElementById('f_nombre').value,
-    contacto: document.getElementById('f_contacto').value,
-    email: document.getElementById('f_email').value,
-    telefono: document.getElementById('f_tel').value,
-    rubro: document.getElementById('f_rubro').value,
-    anos: document.getElementById('f_anos').value,
-    empleados: document.querySelector('input[name=empleados]:checked')?.value || '-',
-    registro_ventas: document.querySelector('input[name=reg_ventas]:checked')?.value || '-',
-    herramientas,
-    frecuencia_analisis: document.querySelector('input[name=frec]:checked')?.value || '-',
-    cuello_botella: document.querySelector('input[name=cb]:checked')?.value || '-',
-    procesos: document.querySelector('input[name=proc]:checked')?.value || '-',
-    horas_admin: document.querySelector('input[name=horas]:checked')?.value || '-',
-    producto_rentable: document.querySelector('input[name=rentable]:checked')?.value || '-',
-    base_clientes: document.querySelector('input[name=clientes_db]:checked')?.value || '-',
-    objetivos,
-    presupuesto: document.querySelector('input[name=budget]:checked')?.value || '-',
-    comentarios: document.getElementById('f_extra').value || '-',
-    score_total: score + '/100',
-    nivel: level.title,
-    dimensiones: dims.map(d => `${d.name}: ${d.score}/100`).join(' | '),
-  };
-
-  try {
-    const res = await fetch('https://formspree.io/f/mjgjaoel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    if (res.ok) {
-      btn.textContent = '✓ Propuesta solicitada';
-      btn.style.background = 'linear-gradient(135deg,#10B981,#059669)';
-      const cta = document.querySelector('.result-cta p');
-      cta.textContent = `¡Listo, ${data.negocio || 'equipo'}! Revisaremos tu diagnóstico y te contactaremos en menos de 24 horas.`;
-    } else {
-      throw new Error('Error al enviar');
-    }
-  } catch(e) {
-    btn.textContent = 'Reintentar';
-    btn.disabled = false;
-    alert('Hubo un problema al enviar. Por favor intenta de nuevo.');
-  }
-}
+function openIngredient(id){const x=db.ingredients.find(i=>i.id===id)||{name:'',category:'',supplier:'',purchase_qty:1000,unit:'g',net_price:0,purchase_date:new Date().toISOString().slice(0,10)};openModal(`<div class="modalhead"><h2>${id?'Editar':'Agregar'} ingrediente</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="n" value="${x.name}"></div><div class="field"><label>Categoría</label><input id="c" value="${x.category||''}"></div><div class="field"><label>Proveedor</label><input id="s" value="${x.supplier||''}"></div><div class="field"><label>Cantidad comprada</label><input id="q" type="number" value="${x.purchase_qty}"></div><div class="field"><label>Unidad</label><select id="u"><option ${x.unit==='g'?'selected':''}>g</option><option ${x.unit==='kg'?'selected':''}>kg</option><option ${x.unit==='ml'?'selected':''}>ml</option><option ${x.unit==='un'?'selected':''}>un</option></select></div><div class="field"><label>Precio neto</label><input id="p" type="number" value="${x.net_price}"></div><div class="field"><label>Fecha</label><input id="d" type="date" value="${x.purchase_date||''}"></div></div><button style="margin-top:15px" onclick="saveIngredient('${id||''}')">Guardar</button>`)}
+async function saveIngredient(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:n.value.trim(),category:c.value.trim(),supplier:s.value.trim(),purchase_qty:+q.value,unit:u.value,net_price:+p.value,purchase_date:d.value};if(!payload.name||payload.purchase_qty<=0)return alert('Completa nombre y cantidad.');if(id){const old=db.ingredients.find(i=>i.id===id);if(old&&Number(old.net_price)!==payload.net_price)await supabase.from('ingredient_price_history').insert({user_id:user.id,ingredient_id:id,old_price:old.net_price,new_price:payload.net_price,supplier:payload.supplier});await supabase.from('ingredients').update(payload).eq('id',id)}else await supabase.from('ingredients').insert(payload);await refresh();closeModal()}
+function openRecipe(id){const r=db.recipes.find(x=>x.id===id)||{name:'',category:'',yield_units:1,lines:[]};window.lines=(r.lines||[]).map(x=>({...x}));openModal(`<div class="modalhead"><h2>${id?'Editar':'Nueva'} receta</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="rn" value="${r.name}"></div><div class="field"><label>Categoría</label><input id="rc" value="${r.category||''}"></div><div class="field"><label>Rendimiento</label><input id="ry" type="number" value="${r.yield_units}"></div></div><div class="section"><h2>Ingredientes</h2><div id="lines"></div><button class="secondary" onclick="addLine()">+ Ingrediente</button></div><button style="margin-top:15px" onclick="saveRecipe('${id||''}')">Guardar receta</button>`);drawLines()}
+function addLine(){lines.push({ingredient_id:db.ingredients[0]?.id||'',quantity:0});drawLines()}
+function drawLines(){document.getElementById('lines').innerHTML=lines.map((l,i)=>`<div class="recipe-line"><div class="field"><label>Ingrediente</label><select onchange="lines[${i}].ingredient_id=this.value">${db.ingredients.map(x=>`<option value="${x.id}" ${x.id===l.ingredient_id?'selected':''}>${x.name}</option>`).join('')}</select></div><div class="field"><label>Cantidad</label><input type="number" value="${l.quantity}" onchange="lines[${i}].quantity=+this.value"></div><div>${money(ingredientCost(db.ingredients.find(x=>x.id===l.ingredient_id))*l.quantity)}</div><button class="danger" onclick="lines.splice(${i},1);drawLines()">×</button></div>`).join('')}
+async function saveRecipe(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:rn.value.trim(),category:rc.value.trim(),yield_units:+ry.value};if(!payload.name||payload.yield_units<=0)return alert('Completa nombre y rendimiento.');let rid=id;if(id)await supabase.from('recipes').update(payload).eq('id',id);else{const r=await supabase.from('recipes').insert(payload).select().single();if(r.error)return alert(r.error.message);rid=r.data.id}await supabase.from('recipe_lines').delete().eq('recipe_id',rid);if(lines.length)await supabase.from('recipe_lines').insert(lines.map(l=>({user_id:user.id,recipe_id:rid,ingredient_id:l.ingredient_id,quantity:l.quantity})));await refresh();closeModal()}
+function openProduct(id){const p=db.products.find(x=>x.id===id)||{name:'',recipe_id:db.recipes[0]?.id||'',packaging:0,labor:0,sale_price_net:0,active:true};openModal(`<div class="modalhead"><h2>${id?'Editar':'Nuevo'} producto</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="pn" value="${p.name}"></div><div class="field"><label>Receta</label><select id="pr">${db.recipes.map(r=>`<option value="${r.id}" ${r.id===p.recipe_id?'selected':''}>${r.name}</option>`).join('')}</select></div><div class="field"><label>Packaging por unidad</label><input id="pp" type="number" value="${p.packaging}"></div><div class="field"><label>Mano de obra por unidad</label><input id="pl" type="number" value="${p.labor}"></div><div class="field"><label>Precio de venta neto</label><input id="px" type="number" value="${p.sale_price_net}"></div><div class="field"><label>Estado</label><select id="pa"><option value="true" ${p.active?'selected':''}>Activo</option><option value="false" ${!p.active?'selected':''}>Inactivo</option></select></div></div><div class="notice">Costo actual: <b>${money(productCost(p))}</b> · Margen: <b>${fmt(margin(p))}%</b></div><button onclick="saveProduct('${id||''}')">Guardar producto</button>`)}
+async function saveProduct(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:pn.value.trim(),recipe_id:pr.value||null,packaging:+pp.value,labor:+pl.value,sale_price_net:+px.value,active:pa.value==='true'};if(!payload.name)return alert('Completa el nombre.');if(id)await supabase.from('products').update(payload).eq('id',id);else await supabase.from('products').insert(payload);await refresh();closeModal()}
+function openFixed(id){const x=db.fixed.find(i=>i.id===id)||{name:'',amount:0,period:'Mensual'};openModal(`<div class="modalhead"><h2>${id?'Editar':'Agregar'} costo fijo</h2><button class="secondary" onclick="closeModal()">Cerrar</button></div><div class="form"><div class="field"><label>Nombre</label><input id="fn" value="${x.name}"></div><div class="field"><label>Monto mensual</label><input id="fa" type="number" value="${x.amount}"></div></div><button style="margin-top:15px" onclick="saveFixed('${id||''}')">Guardar</button>`)}
+async function saveFixed(id){const user=(await supabase.auth.getUser()).data.user;const payload={user_id:user.id,name:fn.value.trim(),amount:+fa.value,period:'Mensual'};if(id)await supabase.from('fixed_costs').update(payload).eq('id',id);else await supabase.from('fixed_costs').insert(payload);await refresh();closeModal()}
+async function removeRow(table,id){if(!confirm('¿Eliminar este registro?'))return;await supabase.from(table).delete().eq('id',id);await refresh()}
+async function removeRecipe(id){if(!confirm('¿Eliminar esta receta?'))return;await supabase.from('recipe_lines').delete().eq('recipe_id',id);await supabase.from('recipes').delete().eq('id',id);await refresh()}
+async function saveSettings(){const user=(await supabase.auth.getUser()).data.user;await supabase.from('settings').upsert({user_id:user.id,iva:+iva.value,target_margin:+target.value,currency:'CLP'});await refresh()}
+async function refresh(){await loadData();render()}
+window.login = login;
+window.signup = signup;
+window.logout = logout;
+window.go = go;
+window.openIngredient = openIngredient;
+window.saveIngredient = saveIngredient;
+window.openRecipe = openRecipe;
+window.addLine = addLine;
+window.drawLines = drawLines;
+window.saveRecipe = saveRecipe;
+window.openProduct = openProduct;
+window.saveProduct = saveProduct;
+window.openFixed = openFixed;
+window.saveFixed = saveFixed;
+window.removeRow = removeRow;
+window.removeRecipe = removeRecipe;
+window.saveSettings = saveSettings;
+window.closeModal = closeModal;
+window.beSelect = beSelect;
+window.login=login;
+window.signup=signup;
+window.go=go;
+window.logout=logout;
+window.openIngredient=openIngredient;
+window.saveIngredient=saveIngredient;
+window.openRecipe=openRecipe;
+window.addLine=addLine;
+window.drawLines=drawLines;
+window.saveRecipe=saveRecipe;
+window.openProduct=openProduct;
+window.saveProduct=saveProduct;
+window.openFixed=openFixed;
+window.saveFixed=saveFixed;
+window.removeRow=removeRow;
+window.removeRecipe=removeRecipe;
+window.saveSettings=saveSettings;
+window.closeModal=closeModal;
+window.beSelect=beSelect;
+init();
 </script>
-</body>
-</html>
+</body></html>
