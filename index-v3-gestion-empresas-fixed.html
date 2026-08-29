@@ -135,5 +135,46 @@ async function saveSettings(){let u=(await supabase.auth.getUser()).data.user,r=
 function pdf(){let js=window.jspdf?.jsPDF;if(!js)return alert("No se pudo cargar PDF.");let d=new js(),p=db.products.filter(x=>x.active),m=p.length?p.reduce((s,x)=>s+margin(x),0)/p.length:0;d.setFontSize(18);d.text("Resumen ejecutivo",20,20);d.setFontSize(12);d.text(db.business.name,20,30);d.text("Fecha: "+new Date().toLocaleDateString("es-CL"),20,38);d.text("Productos activos: "+p.length,20,50);d.text("Margen promedio: "+fmt(m)+"%",20,58);d.text("Costos fijos: "+money(fixed()),20,66);let y=80;d.setFontSize(11);p.slice(0,25).forEach(x=>{if(y>280){d.addPage();y=20}d.text(`${x.name} | costo ${money(pCost(x))} | venta ${money(x.sale_price_net)} | margen ${fmt(margin(x))}%`,20,y);y+=7});d.save("resumen-"+db.business.name.replace(/[^a-z0-9]/gi,"-")+".pdf")}
 async function init(){let s=await supabase.auth.getSession();if(!s.data.session)return auth();try{await businesses();await load();render()}catch(e){root.innerHTML=`<div class=auth><div class=authbox><h2>⚠️ Error</h2><p>${esc(e.message)}</p><button onclick=location.reload()>Reintentar</button></div></div>`}}
 Object.assign(window,{login,signup,go,switchBiz,businessModal,saveBusiness,ingredientModal,saveIngredient,recipeModal,addLine,saveRecipe,productModal,addPR,saveProduct,fixedModal,saveFixed,saveSettings,pdf,close,setBeMode,setBeProduct});
-init();
+Object.assign(window, {
+  login,
+  signup,
+  go,
+  switchBiz,
+  logout,
+  businessModal,
+  saveBusiness,
+  ingredientModal,
+  saveIngredient,
+  recipeModal,
+  addLine,
+  saveRecipe,
+  productModal,
+  addPR,
+  removePR,
+  saveProduct,
+  fixedModal,
+  saveFixed,
+  saveSettings,
+  pdf,
+  close
+});
+
+Object.defineProperties(window, {
+  draft: {
+    get: () => draft,
+    set: v => { draft = v; }
+  },
+  beMode: {
+    get: () => beMode,
+    set: v => { beMode = v; }
+  },
+  beId: {
+    get: () => beId,
+    set: v => { beId = v; }
+  },
+  beMix: {
+    get: () => beMix,
+    set: v => { beMix = v; }
+  }
+});init();
 </script></body></html>
