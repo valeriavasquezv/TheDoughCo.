@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Costos Pastelería V4</title>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f7f5f2;--card:#fff;--text:#292724;--muted:#77716b;--line:#e8e2dc;--a:#8b5e4b;--good:#347a57;--warn:#b67a1c;--bad:#b54b4b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:var(--a);color:#fff}button.secondary{background:#eee8e2;color:var(--text)}button.danger{background:#b54b4b}
+.app{display:flex;min-height:100vh}.side{width:235px;background:#fff;border-right:1px solid var(--line);padding:20px;position:sticky;top:0;height:100vh}.brand{font-weight:800;font-size:20px;margin-bottom:18px}.nav button{display:block;width:100%;text-align:left;background:transparent;color:var(--text);margin:3px 0}.nav button.active{background:#f1e8e2}.side-bottom{position:absolute;bottom:20px;left:20px;right:20px}
+main{flex:1;padding:28px;max-width:1500px;margin:auto;width:100%}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}.title{font-size:28px;font-weight:800}.sub{color:var(--muted);margin-top:3px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}.metric{font-size:28px;font-weight:800;margin-top:7px}.label{color:var(--muted);font-size:13px}.section{margin-top:22px}.table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px}.table{width:100%;border-collapse:collapse;min-width:700px}.table th,.table td{padding:12px;border-bottom:1px solid var(--line);text-align:left}.table th{font-size:12px;color:var(--muted)}.badge{display:inline-block;padding:4px 9px;border-radius:99px;background:#e8f2ed;color:var(--good);font-size:12px}.badge.warn{background:#fff1d8;color:var(--warn)}.badge.bad{background:#f8e2e2;color:var(--bad)}
+.form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form .full{grid-column:1/-1}.form label{font-size:13px;color:var(--muted)}.form input,.form select,.form textarea{width:100%;padding:10px;border:1px solid #ddd5ce;border-radius:10px;background:#fff}.actions{display:flex;gap:8px;flex-wrap:wrap}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;z-index:10}.modalbox{background:#fff;border-radius:18px;width:min(760px,100%);max-height:90vh;overflow:auto;padding:22px}.hidden{display:none!important}.notice{padding:12px;border-radius:12px;background:#f2ece7;margin-bottom:15px}.error{background:#f8e2e2;color:#8d3030}.success{background:#e8f2ed;color:#276044}.pillbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.recipe-line,.pr-line{display:grid;grid-template-columns:2fr 1fr auto;gap:8px;margin:8px 0}.mix-row{display:grid;grid-template-columns:2fr 110px 110px 110px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.loginbox{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;padding:25px}.loginbox input{width:100%;padding:12px;border:1px solid #ddd5ce;border-radius:10px;margin:7px 0 12px}
+@media(max-width:900px){.side{width:190px}.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.app{display:block}.side{position:static;width:100%;height:auto;border-right:0;border-bottom:1px solid var(--line)}.side-bottom{position:static;margin-top:10px}.grid,.grid2,.form{grid-template-columns:1fr}main{padding:18px}.top{align-items:flex-start}.mix-row{grid-template-columns:1fr 90px 90px 90px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="modal" class="modal hidden"><div id="modalbox" class="modalbox"></div></div>
+
+<script type="module">
+import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL="https://swoendvkjyrgmyaytrnr.supabase.co";
+const SUPABASE_KEY="sb_publishable_Q1vDioyCIY75_94N_6idRw_IjLS98fG";
+const supabase=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const state={
+ user:null,business:null,businesses:[],settings:{iva:19,target_margin:40,currency:"CLP"},
+ ingredients:[],recipes:[],recipeLines:[],products:[],productRecipes:[],fixed:[],
+ page:"dashboard",editing:null,beMode:"general",beId:"",mix:{}
+};
+const $=id=>document.getElementById(id);
+const money=n=>"$"+Math.round(Number(n)||0).toLocaleString("es-CL");
+const num=n=>Number(n)||0;
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function msg(t,kind="notice"){return `<div class="notice ${kind}">${esc(t)}</div>`}
+function openModal(html){$("modalbox").innerHTML=html;$("modal").classList.remove("hidden")}
+function close(){ $("modal").classList.add("hidden") }
+$("modal").addEventListener("click",e=>{if(e.target.id==="modal")close()});
+
+async function api(q,label){
+  const r=await q;
+  if(r.error){console.error(label,r.error);throw new Error(label+": "+r.error.message)}
+  return r.data;
+}
+
+async function businesses(){
+  try{
+    state.businesses=await api(supabase.from("businesses").select("*").order("created_at",{ascending:true}),"Negocios");
+  }catch(e){throw e}
+  if(!state.businesses.length){
+    await createBusiness("Mi negocio");
+    state.businesses=await api(supabase.from("businesses").select("*").order("created_at",{ascending:true}),"Negocios");
+  }
+  state.business=state.business||state.businesses[0];
+}
+async function createBusiness(name){
+  const d=await api(supabase.from("businesses").insert({user_id:state.user.id,name:name.trim()}).select().single(),"Crear negocio");
+  state.business=d;state.businesses=[...state.businesses,d];
+}
+async function switchBiz(id){
+  const b=state.businesses.find(x=>x.id===id);if(!b)return;
+  state.business=b;localStorage.setItem("active_business",id);
+  await load();render();
+}
+async function load(){
+  const b=state.business?.id;if(!b)return;
+  const tables=[
+    ["ingredients","ingredients"],["recipes","recipes"],["recipe_lines","recipeLines"],
+    ["products","products"],["product_recipes","productRecipes"],["fixed_costs","fixed"],["settings","settings"]
+  ];
+  for(const [table,key] of tables){
+    let q=supabase.from(table).select("*").eq("business_id",b);
+    if(table==="settings")q=q.limit(1);
+    try{state[key]=await api(q,table)}catch(e){
+      if(table==="product_recipes") state[key]=[];
+      else throw e;
+    }
+  }
+  state.settings=state.settings[0]||{iva:19,target_margin:40,currency:"CLP"};
+}
+function ingredientCost(i){
+  const qty=num(i.purchase_qty); return qty>0?num(i.net_price)/qty:0;
+}
+function recipeCost(rid){
+  return state.recipeLines.filter(x=>x.recipe_id===rid).reduce((s,l)=>{
+    const i=state.ingredients.find(x=>x.id===l.ingredient_id);return s+ingredientCost(i)*num(l.quantity)
+  },0);
+}
+function productRecipeRows(pid){
+  const rows=state.productRecipes.filter(x=>x.product_id===pid);
+  if(rows.length)return rows;
+  const p=state.products.find(x=>x.id===pid);
+  return p?.recipe_id?[{recipe_id:p.recipe_id,quantity:1}]:[];
+}
+function productCost(p){
+  const recipeC=productRecipeRows(p.id).reduce((s,x)=>{
+    const r=state.recipes.find(z=>z.id===x.recipe_id);return s+recipeCost(r?.id)*Math.max(num(x.quantity),0)
+  },0);
+  return recipeC+num(p.packaging)+num(p.labor);
+}
+function productPrice(p){return num(p.sale_price_net)}
+function margin(p){const pr=productPrice(p);return pr?((pr-productCost(p))/pr)*100:0}
+function fixedMonthly(){return state.fixed.reduce((s,x)=>s+num(x.amount),0)}
+function activeProducts(){return state.products.filter(p=>p.active!==false)}
+function nav(){
+ return [["dashboard","🏠 Inicio"],["ingredients","🫐 Ingredientes"],["recipes","📖 Recetas"],["products","🍪 Productos"],["costs","💸 Costos"],["breakEven","🎯 Equilibrio"],["report","📄 Resumen ejecutivo"],["settings","⚙️ Configuración"]]
+}
+function shell(content){
+ $("root").innerHTML=`<div class="app"><aside class="side">
+  <div class="brand">🍰 Costos<br>Pastelería</div>
+  <div class="sub" style="margin-bottom:12px">Negocio activo</div>
+  <select style="width:100%;padding:9px;border:1px solid #ddd5ce;border-radius:10px" onchange="switchBiz(this.value)">
+   ${state.businesses.map(b=>`<option value="${b.id}" ${b.id===state.business?.id?"selected":""}>${esc(b.name)}</option>`).join("")}
+  </select>
+  <button class="secondary" style="width:100%;margin:8px 0 14px" onclick="businessModal()">＋ Nuevo negocio</button>
+  <div class="nav">${nav().map(([id,t])=>`<button class="${state.page===id?"active":""}" onclick="go('${id}')">${t}</button>`).join("")}</div>
+  <div class="side-bottom"><button class="secondary" style="width:100%" onclick="logout()">Cerrar sesión</button></div>
+ </aside><main>${content}</main></div>`
+}
+function go(p){state.page=p;render()}
+function dashboard(){
+ const ps=activeProducts(), avgC=ps.length?ps.reduce((s,p)=>s+productCost(p),0)/ps.length:0,avgP=ps.length?ps.reduce((s,p)=>s+productPrice(p),0)/ps.length:0,avgM=ps.length?ps.reduce((s,p)=>s+margin(p),0)/ps.length:0;
+ return `<div class="top"><div><div class="title">Resumen</div><div class="sub">${esc(state.business?.name||"")} · datos sincronizados</div></div><button onclick="productModal()">＋ Crear producto</button></div>
+ <div class="grid"><div class="card"><div class="label">Productos activos</div><div class="metric">${ps.length}</div></div><div class="card"><div class="label">Costo promedio</div><div class="metric">${money(avgC)}</div></div><div class="card"><div class="label">Precio promedio</div><div class="metric">${money(avgP)}</div></div><div class="card"><div class="label">Margen promedio</div><div class="metric">${avgM.toFixed(1)}%</div></div><div class="card"><div class="label">Costos fijos mensuales</div><div class="metric">${money(fixedMonthly())}</div></div><div class="card"><div class="label">IVA</div><div class="metric">${num(state.settings.iva)}%</div></div></div>
+ <div class="section card"><div class="top"><div><div class="title" style="font-size:20px">Productos</div><div class="sub">Costo, precio neto y margen</div></div><button class="secondary" onclick="go('products')">Ver todos</button></div>
+ <div class="table-wrap"><table class="table"><thead><tr><th>Producto</th><th>Recetas</th><th>Costo</th><th>Venta neta</th><th>Margen</th></tr></thead><tbody>${ps.map(p=>`<tr><td>${esc(p.name)}</td><td>${productRecipeRows(p.id).length}</td><td>${money(productCost(p))}</td><td>${money(productPrice(p))}</td><td><span class="badge ${margin(p)<30?"bad":margin(p)<45?"warn":""}">${margin(p).toFixed(1)}%</span></td></tr>`).join("")||`<tr><td colspan="5">No hay productos.</td></tr>`}</tbody></table></div></div>`
+}
+function ingredients(){
+ return `<div class="top"><div><div class="title">Ingredientes</div><div class="sub">Costo unitario calculado según compra.</div></div><button onclick="ingredientModal()">＋ Nuevo ingrediente</button></div>
+ <div class="table-wrap"><table class="table"><thead><tr><th>Ingrediente</th><th>Categoría</th><th>Proveedor</th><th>Compra</th><th>Unidad</th><th>Precio</th><th>Costo/unidad</th><th></th></tr></thead><tbody>${state.ingredients.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.category)}</td><td>${esc(i.supplier)}</td><td>${num(i.purchase_qty)}</td><td>${esc(i.unit)}</td><td>${money(i.net_price)}</td><td>${money(ingredientCost(i))}</td><td><button class="secondary" onclick="ingredientModal('${i.id}')">Editar</button></td></tr>`).join("")||`<tr><td colspan="8">No hay ingredientes.</td></tr>`}</tbody></table></div>`
+}
+function recipes(){
+ return `<div class="top"><div><div class="title">Recetas</div><div class="sub">Una receta produce una cantidad definida de unidades.</div></div><button onclick="recipeModal()">＋ Nueva receta</button></div>
+ <div class="grid2">${state.recipes.map(r=>`<div class="card"><div class="top"><div><b>${esc(r.name)}</b><div class="sub">${esc(r.category||"")} · rendimiento ${num(r.yield_units)}</div></div><button class="secondary" onclick="recipeModal('${r.id}')">Editar</button></div><div style="font-size:22px;font-weight:800">${money(recipeCost(r.id))}</div><div class="sub">Costo por unidad: ${money(recipeCost(r.id)/Math.max(num(r.yield_units),1))}</div><hr style="border:0;border-top:1px solid var(--line)"><div>${state.recipeLines.filter(x=>x.recipe_id===r.id).map(l=>{const i=state.ingredients.find(z=>z.id===l.ingredient_id);return `<div>${esc(i?.name||"Ingrediente")} · ${num(l.quantity)}</div>`}).join("")}</div></div>`).join("")||`<div class="card">No hay recetas.</div>`}</div>`
+}
+function products(){
+ return `<div class="top"><div><div class="title">Productos</div><div class="sub">Un producto puede usar una o varias recetas.</div></div><button onclick="productModal()">＋ Nuevo producto</button></div>
+ <div class="table-wrap"><table class="table"><thead><tr><th>Producto</th><th>Recetas</th><th>Packaging</th><th>Mano de obra</th><th>Costo total</th><th>Venta neta</th><th>Margen</th><th></th></tr></thead><tbody>${state.products.map(p=>`<tr><td>${esc(p.name)}</td><td>${productRecipeRows(p.id).map(x=>esc(state.recipes.find(r=>r.id===x.recipe_id)?.name||"")).join(", ")||"—"}</td><td>${money(p.packaging)}</td><td>${money(p.labor)}</td><td>${money(productCost(p))}</td><td>${money(productPrice(p))}</td><td>${margin(p).toFixed(1)}%</td><td><button class="secondary" onclick="productModal('${p.id}')">Editar</button></td></tr>`).join("")||`<tr><td colspan="8">No hay productos.</td></tr>`}</tbody></table></div>`
+}
+function costs(){
+ return `<div class="top"><div><div class="title">Costos fijos</div><div class="sub">Costos mensuales utilizados en el punto de equilibrio.</div></div><button onclick="fixedModal()">＋ Agregar costo</button></div>
+ <div class="card"><div class="metric">${money(fixedMonthly())}</div><div class="sub">Total mensual</div></div>
+ <div class="section table-wrap"><table class="table"><thead><tr><th>Nombre</th><th>Monto</th><th>Período</th><th>Notas</th></tr></thead><tbody>${state.fixed.map(x=>`<tr><td>${esc(x.name)}</td><td>${money(x.amount)}</td><td>${esc(x.period)}</td><td>${esc(x.notes)}</td></tr>`).join("")||`<tr><td colspan="4">No hay costos.</td></tr>`}</tbody></table></div>`
+}
+function breakEven(){
+ const ps=activeProducts();
+ const fixed=fixedMonthly();
+ if(!ps.length)return `<div class="title">Punto de equilibrio</div>${msg("Agrega al menos un producto.","warn")}`;
+ const rows=ps.map(p=>{
+   const price=productPrice(p),c=productCost(p),con=price-c;
+   return {p,price,c,con,margin:price?con/price:0};
+ });
+ if(state.beMode==="product" && !state.beId)state.beId=ps[0].id;
+ let salesEq=0, unitsEq=0, weighted=0;
+ if(state.beMode==="product"){
+   const r=rows.find(x=>x.p.id===state.beId)||rows[0]; salesEq=r.con>0?fixed/r.con*r.price:Infinity;unitsEq=r.con>0?fixed/r.con:Infinity;weighted=r.margin;
+ }else{
+   let totalMix=0; rows.forEach(r=>{const m=state.mix[r.p.id]??(100/rows.length);totalMix+=m});
+   rows.forEach(r=>{const m=(state.mix[r.p.id]??(100/rows.length))/Math.max(totalMix,1);weighted+=m*r.margin});
+   salesEq=weighted>0?fixed/weighted:Infinity;
+   unitsEq=weighted>0?fixed/(rows.reduce((s,r)=>s+r.price*(state.mix[r.p.id]??(100/rows.length))/Math.max(totalMix,1),0)-rows.reduce((s,r)=>s+r.c*(state.mix[r.p.id]??(100/rows.length))/Math.max(totalMix,1),0)):Infinity;
+ }
+ return `<div class="top"><div><div class="title">Punto de equilibrio</div><div class="sub">General considerando todos los productos o análisis de un producto.</div></div></div>
+ <div class="pillbar"><button class="${state.beMode==="general"?"":"secondary"}" onclick="beModeSet('general')">General</button><button class="${state.beMode==="product"?"":"secondary"}" onclick="beModeSet('product')">Producto específico</button></div>
+ ${state.beMode==="product"?`<div class="card"><label>Producto</label><select style="padding:10px;width:100%;margin-top:6px" onchange="beProduct(this.value)">${rows.map(r=>`<option value="${r.p.id}" ${r.p.id===state.beId?"selected":""}>${esc(r.p.name)}</option>`).join("")}</select></div>`:""}
+ ${state.beMode==="general"?`<div class="card section"><b>Mix de ventas</b><div class="sub">Indica qué porcentaje de las ventas representa cada producto. Si no cambias nada, se reparte automáticamente por igual.</div>${rows.map(r=>`<div class="mix-row"><div><b>${esc(r.p.name)}</b><div class="sub">Margen ${r.margin.toFixed(1)}%</div></div><input type="number" min="0" step="1" value="${state.mix[r.p.id]??(100/rows.length).toFixed(1)}" onchange="mixSet('${r.p.id}',this.value)"><div>${money(r.price)}</div><div>${money(r.con)}</div></div>`).join("")}</div>`:""}
+ <div class="grid section"><div class="card"><div class="label">Costos fijos</div><div class="metric">${money(fixed)}</div></div><div class="card"><div class="label">Margen ponderado</div><div class="metric">${(weighted*100).toFixed(1)}%</div></div><div class="card"><div class="label">Ventas para equilibrio</div><div class="metric">${isFinite(salesEq)?money(salesEq):"—"}</div></div><div class="card"><div class="label">Unidades equivalentes</div><div class="metric">${isFinite(unitsEq)?Math.ceil(unitsEq).toLocaleString("es-CL"):"—"}</div></div></div>
+ <div class="section card"><b>Detalle por producto</b><div class="table-wrap" style="margin-top:10px"><table class="table"><thead><tr><th>Producto</th><th>Costo</th><th>Precio</th><th>Contribución</th><th>Margen</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.p.name)}</td><td>${money(r.c)}</td><td>${money(r.price)}</td><td>${money(r.con)}</td><td>${(r.margin*100).toFixed(1)}%</td></tr>`).join("")}</tbody></table></div></div>`
+}
+function beModeSet(v){state.beMode=v;render()} function beProduct(v){state.beId=v;render()} function mixSet(id,v){state.mix[id]=num(v);render()}
+function report(){
+ const ps=activeProducts(), avgM=ps.length?ps.reduce((s,p)=>s+margin(p),0)/ps.length:0;
+ const best=[...ps].sort((a,b)=>margin(b)-margin(a))[0], worst=[...ps].sort((a,b)=>margin(a)-margin(b))[0];
+ return `<div class="top"><div><div class="title">Resumen ejecutivo</div><div class="sub">Informe de gestión de ${esc(state.business?.name||"")}</div></div><button onclick="pdf()">📄 Generar PDF</button></div>
+ <div class="grid"><div class="card"><div class="label">Productos activos</div><div class="metric">${ps.length}</div></div><div class="card"><div class="label">Margen promedio</div><div class="metric">${avgM.toFixed(1)}%</div></div><div class="card"><div class="label">Costos fijos</div><div class="metric">${money(fixedMonthly())}</div></div><div class="card"><div class="label">IVA</div><div class="metric">${num(state.settings.iva)}%</div></div></div>
+ <div class="grid2 section"><div class="card"><h3>Situación</h3><p>El negocio tiene ${ps.length} productos activos y costos fijos mensuales por ${money(fixedMonthly())}. El margen promedio de los productos es ${avgM.toFixed(1)}%.</p><p>El producto con mayor margen es <b>${esc(best?.name||"—")}</b>${best?` (${margin(best).toFixed(1)}%)`:""} y el de menor margen es <b>${esc(worst?.name||"—")}</b>${worst?` (${margin(worst).toFixed(1)}%)`:""}.</p></div>
+ <div class="card"><h3>Recomendaciones</h3><ul><li>Revisar periódicamente precios y costos de ingredientes.</li><li>Priorizar productos con mayor contribución.</li><li>Usar el punto de equilibrio general con un mix de ventas realista.</li><li>Actualizar costos fijos mensuales antes de tomar decisiones.</li></ul></div></div>
+ <div class="section table-wrap"><table class="table"><thead><tr><th>Producto</th><th>Costo</th><th>Precio</th><th>Margen</th></tr></thead><tbody>${ps.map(p=>`<tr><td>${esc(p.name)}</td><td>${money(productCost(p))}</td><td>${money(productPrice(p))}</td><td>${margin(p).toFixed(1)}%</td></tr>`).join("")}</tbody></table></div>`
+}
+function settingsPage(){
+ return `<div class="top"><div><div class="title">Configuración</div><div class="sub">Parámetros del negocio activo.</div></div></div>
+ <div class="card"><div class="form"><div><label>IVA (%)</label><input id="iva" type="number" value="${num(state.settings.iva)}"></div><div><label>Margen objetivo (%)</label><input id="target" type="number" value="${num(state.settings.target_margin)}"></div><div><label>Moneda</label><input id="currency" value="${esc(state.settings.currency||"CLP")}"></div></div><div class="actions" style="margin-top:15px"><button onclick="saveSettings()">Guardar configuración</button></div></div>`
+}
+function render(){
+ let c=state.page==="dashboard"?dashboard():state.page==="ingredients"?ingredients():state.page==="recipes"?recipes():state.page==="products"?products():state.page==="costs"?costs():state.page==="breakEven"?breakEven():state.page==="report"?report():settingsPage();
+ shell(c);
+}
+function businessModal(){openModal(`<div class="top"><div class="title" style="font-size:22px">Nuevo negocio</div><button class="secondary" onclick="close()">×</button></div><div class="form"><div class="full"><label>Nombre del negocio</label><input id="bn" placeholder="Ej. The Dough Co."></div></div><div class="actions" style="margin-top:15px"><button onclick="saveBusiness()">Crear negocio</button><button class="secondary" onclick="close()">Cancelar</button></div>`)}
+async function saveBusiness(){try{const n=$("bn").value;if(!n.trim())return alert("Escribe un nombre.");await createBusiness(n);close();await load();render()}catch(e){alert(e.message)}}
+function ingredientModal(id){
+ const i=state.ingredients.find(x=>x.id===id)||{};
+ openModal(`<div class="top"><div class="title" style="font-size:22px">${id?"Editar":"Nuevo"} ingrediente</div><button class="secondary" onclick="close()">×</button></div><div class="form">
+ <div><label>Nombre</label><input id="in_name" value="${esc(i.name||"")}"></div><div><label>Categoría</label><input id="in_cat" value="${esc(i.category||"")}"></div><div><label>Proveedor</label><input id="in_sup" value="${esc(i.supplier||"")}"></div><div><label>Cantidad comprada</label><input id="in_qty" type="number" step="0.001" value="${num(i.purchase_qty)}"></div><div><label>Unidad</label><input id="in_unit" value="${esc(i.unit||"g")}"></div><div><label>Precio neto compra</label><input id="in_price" type="number" value="${num(i.net_price)}"></div></div>
+ <div class="actions" style="margin-top:15px"><button onclick="saveIngredient('${id||""}')">Guardar</button><button class="secondary" onclick="close()">Cancelar</button></div>`)
+}
+async function saveIngredient(id){
+ try{
+  const obj={business_id:state.business.id,user_id:state.user.id,name:$("in_name").value.trim(),category:$("in_cat").value.trim(),supplier:$("in_sup").value.trim(),purchase_qty:num($("in_qty").value),unit:$("in_unit").value.trim(),net_price:num($("in_price").value)};
+  if(!obj.name)return alert("Falta el nombre.");
+  await api(id?supabase.from("ingredients").update(obj).eq("id",id).eq("business_id",state.business.id):supabase.from("ingredients").insert(obj),"Guardar ingrediente");
+  close();await load();render();
+ }catch(e){alert(e.message)}
+}
+function recipeModal(id){
+ const r=state.recipes.find(x=>x.id===id)||{}, lines=state.recipeLines.filter(x=>x.recipe_id===id);
+ const lineHtml=lines.map(l=>recipeLineHtml(l.ingredient_id,l.quantity)).join("");
+ openModal(`<div class="top"><div class="title" style="font-size:22px">${id?"Editar":"Nueva"} receta</div><button class="secondary" onclick="close()">×</button></div>
+ <div class="form"><div><label>Nombre</label><input id="rn" value="${esc(r.name||"")}"></div><div><label>Categoría</label><input id="rc" value="${esc(r.category||"")}"></div><div><label>Rendimiento (unidades)</label><input id="ry" type="number" value="${num(r.yield_units)||1}"></div></div>
+ <h3>Ingredientes</h3><div id="recipeLines">${lineHtml}</div><button class="secondary" onclick="addLine()">＋ Ingrediente</button>
+ <div class="actions" style="margin-top:15px"><button onclick="saveRecipe('${id||""}')">Guardar receta</button><button class="secondary" onclick="close()">Cancelar</button></div>`)
+}
+function recipeLineHtml(iid="",qty=""){return `<div class="recipe-line"><select class="r-ing">${state.ingredients.map(i=>`<option value="${i.id}" ${i.id===iid?"selected":""}>${esc(i.name)}</option>`).join("")}</select><input class="r-qty" type="number" step="0.001" value="${num(qty)}" placeholder="Cantidad"><button class="danger" onclick="this.parentElement.remove()">×</button></div>`}
+function addLine(){ $("recipeLines").insertAdjacentHTML("beforeend",recipeLineHtml()) }
+async function saveRecipe(id){
+ try{
+  const obj={business_id:state.business.id,user_id:state.user.id,name:$("rn").value.trim(),category:$("rc").value.trim(),yield_units:Math.max(1,num($("ry").value))};
+  if(!obj.name)return alert("Falta el nombre.");
+  let rid=id;
+  if(id)await api(supabase.from("recipes").update(obj).eq("id",id).eq("business_id",state.business.id),"Actualizar receta");
+  else {const d=await api(supabase.from("recipes").insert(obj).select().single(),"Crear receta");rid=d.id}
+  if(id)await api(supabase.from("recipe_lines").delete().eq("recipe_id",id).eq("business_id",state.business.id),"Limpiar ingredientes");
+  const rows=[...document.querySelectorAll("#recipeLines .recipe-line")].map(x=>({business_id:state.business.id,user_id:state.user.id,recipe_id:rid,ingredient_id:x.querySelector(".r-ing").value,quantity:num(x.querySelector(".r-qty").value)})).filter(x=>x.ingredient_id&&x.quantity>0);
+  if(rows.length)await api(supabase.from("recipe_lines").insert(rows),"Guardar ingredientes");
+  close();await load();render();
+ }catch(e){alert(e.message)}
+}
+function productModal(id){
+ const p=state.products.find(x=>x.id===id)||{}, rows=productRecipeRows(id||"");
+ openModal(`<div class="top"><div class="title" style="font-size:22px">${id?"Editar":"Nuevo"} producto</div><button class="secondary" onclick="close()">×</button></div>
+ <div class="notice">Puedes asociar <b>varias recetas</b> al mismo producto. El costo suma receta × cantidad + packaging + mano de obra.</div>
+ <div class="form"><div><label>Nombre</label><input id="pn" value="${esc(p.name||"")}"></div><div><label>Precio de venta neto</label><input id="pp" type="number" value="${num(p.sale_price_net)}"></div><div><label>Packaging por unidad</label><input id="pack" type="number" value="${num(p.packaging)}"></div><div><label>Mano de obra por unidad</label><input id="lab" type="number" value="${num(p.labor)}"></div></div>
+ <h3>Recetas asociadas</h3><div id="prLines">${rows.map(x=>prLineHtml(x.recipe_id,x.quantity)).join("")}</div><button class="secondary" onclick="addPR()">＋ Agregar otra receta</button>
+ <div class="actions" style="margin-top:15px"><button onclick="saveProduct('${id||""}')">Guardar producto</button><button class="secondary" onclick="close()">Cancelar</button></div>`)
+}
+function prLineHtml(rid="",qty=1){return `<div class="pr-line"><select class="pr-rec">${state.recipes.map(r=>`<option value="${r.id}" ${r.id===rid?"selected":""}>${esc(r.name)}</option>`).join("")}</select><input class="pr-qty" type="number" min="0" step="0.001" value="${num(qty)}"><button class="danger" onclick="this.parentElement.remove()">×</button></div>`}
+function addPR(){$("prLines").insertAdjacentHTML("beforeend",prLineHtml())}
+async function saveProduct(id){
+ try{
+  const obj={business_id:state.business.id,user_id:state.user.id,name:$("pn").value.trim(),sale_price_net:num($("pp").value),packaging:num($("pack").value),labor:num($("lab").value),active:true};
+  if(!obj.name)return alert("Falta el nombre.");
+  let pid=id;
+  if(id)await api(supabase.from("products").update(obj).eq("id",id).eq("business_id",state.business.id),"Actualizar producto");
+  else {const d=await api(supabase.from("products").insert(obj).select().single(),"Crear producto");pid=d.id}
+  try{await api(supabase.from("product_recipes").delete().eq("product_id",pid).eq("business_id",state.business.id),"Limpiar recetas del producto")}catch(e){}
+  const rows=[...document.querySelectorAll("#prLines .pr-line")].map(x=>({business_id:state.business.id,user_id:state.user.id,product_id:pid,recipe_id:x.querySelector(".pr-rec").value,quantity:num(x.querySelector(".pr-qty").value)})).filter(x=>x.recipe_id&&x.quantity>0);
+  if(rows.length)await api(supabase.from("product_recipes").insert(rows),"Guardar recetas del producto");
+  close();await load();render();
+ }catch(e){alert(e.message)}
+}
+function fixedModal(){openModal(`<div class="top"><div class="title" style="font-size:22px">Nuevo costo fijo</div><button class="secondary" onclick="close()">×</button></div><div class="form"><div><label>Nombre</label><input id="fn"></div><div><label>Monto mensual</label><input id="fa" type="number"></div><div><label>Período</label><input id="fp" value="Mensual"></div><div><label>Notas</label><input id="ft"></div></div><div class="actions" style="margin-top:15px"><button onclick="saveFixed()">Guardar</button><button class="secondary" onclick="close()">Cancelar</button></div>`)}
+async function saveFixed(){try{const o={business_id:state.business.id,user_id:state.user.id,name:$("fn").value.trim(),amount:num($("fa").value),period:$("fp").value,notes:$("ft").value.trim()};await api(supabase.from("fixed_costs").insert(o),"Guardar costo");close();await load();render()}catch(e){alert(e.message)}}
+async function saveSettings(){
+ try{
+  const o={business_id:state.business.id,user_id:state.user.id,iva:num($("iva").value),target_margin:num($("target").value),currency:$("currency").value.trim()||"CLP"};
+  const old=state.settings?.id;
+  if(old)await api(supabase.from("settings").update(o).eq("id",old).eq("business_id",state.business.id),"Actualizar configuración");
+  else await api(supabase.from("settings").insert(o),"Crear configuración");
+  await load();render();
+ }catch(e){alert(e.message)}
+}
+function pdf(){
+ const js=window.jspdf?.jsPDF;if(!js)return alert("No se pudo cargar el generador PDF.");
+ const d=new js(),ps=activeProducts(),avg=ps.length?ps.reduce((s,p)=>s+margin(p),0)/ps.length:0;
+ d.setFontSize(20);d.text("Resumen Ejecutivo - Costos Pastelería",15,18);d.setFontSize(12);
+ d.text(`Negocio: ${state.business?.name||""}`,15,28);d.text(`Fecha: ${new Date().toLocaleDateString("es-CL")}`,15,35);
+ d.text(`Productos activos: ${ps.length}`,15,48);d.text(`Margen promedio: ${avg.toFixed(1)}%`,15,56);d.text(`Costos fijos mensuales: ${money(fixedMonthly())}`,15,64);
+ d.text("Productos",15,78);let y=86;ps.forEach(p=>{if(y>280){d.addPage();y=20}d.text(`${p.name} | Costo ${money(productCost(p))} | Venta ${money(productPrice(p))} | Margen ${margin(p).toFixed(1)}%`,15,y);y+=8});
+ d.text("Conclusiones",15,y+8);d.text("• Revisar precios y costos de ingredientes regularmente.",15,y+16);d.text("• Priorizar productos con mayor contribución.",15,y+24);d.text("• Utilizar el punto de equilibrio general con un mix realista.",15,y+32);
+ d.save(`Resumen_${(state.business?.name||"negocio").replace(/\s+/g,"_")}.pdf`);
+}
+async function logout(){await supabase.auth.signOut();state.user=null;renderAuth()}
+function renderAuth(){
+ $("root").innerHTML=`<div class="login"><div class="loginbox"><h1>🍰 Costos Pastelería</h1><p class="sub">Gestión de costos, recetas, productos y negocios.</p><label>Correo</label><input id="email" type="email"><label>Contraseña</label><input id="pass" type="password"><div class="actions"><button onclick="login()">Ingresar</button><button class="secondary" onclick="signup()">Crear cuenta</button></div><div id="authmsg" style="margin-top:12px"></div></div></div>`
+}
+async function login(){try{const r=await supabase.auth.signInWithPassword({email:$("email").value.trim(),password:$("pass").value});if(r.error)throw r.error;state.user=r.data.user;await start()}catch(e){$("authmsg").innerHTML=msg(e.message,"error")}}
+async function signup(){try{const r=await supabase.auth.signUp({email:$("email").value.trim(),password:$("pass").value});if(r.error)throw r.error;$("authmsg").innerHTML=msg("Cuenta creada. Revisa tu correo si la confirmación está activada.","success")}catch(e){$("authmsg").innerHTML=msg(e.message,"error")}}
+async function start(){
+ try{
+  await businesses();
+  const saved=localStorage.getItem("active_business"),b=state.businesses.find(x=>x.id===saved);if(b)state.business=b;
+  await load();render();
+ }catch(e){$("root").innerHTML=`<div style="padding:30px;max-width:900px;margin:auto">${msg(e.message,"error")}<p>La aplicación carga, pero la base de datos no respondió como espera la V4. Verifica que existan las tablas <b>businesses</b> y <b>product_recipes</b> y que tengan <b>business_id</b>.</p><button onclick="logout()">Cerrar sesión</button></div>`}
+}
+
+Object.assign(window,{go,switchBiz,logout,businessModal,saveBusiness,ingredientModal,saveIngredient,recipeModal,addLine,saveRecipe,productModal,addPR,saveProduct,fixedModal,saveFixed,saveSettings,pdf,login,signup,close,beModeSet,beProduct,mixSet});
+const session=await supabase.auth.getSession();
+if(session.data.session){state.user=session.data.session.user;await start()}else renderAuth();
+</script>
+</body>
+</html>
